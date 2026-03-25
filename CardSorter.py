@@ -10,16 +10,17 @@ import fileinput
 import requests
 import pandas as pd
 import streamlit as st
-st.title("Deck Sorter")
 
 ##Need to update to work with file
 def editDeck():
   decklist=input("Enter decklist file: ")
   try:
+    #opens deck changes file and saves it to decklist var
     with open(decklist, 'r') as file:
      decklist=file.read().splitlines()
      for line in decklist:
        line=line.strip()
+       #if line contains "Added" or "Removed", it will be added to the appropriate list. If it contains neither, it will be added to the unsure list.
        if re.search("Added", line, re.IGNORECASE):
          card=re.sub(r"Added", "", line, re.IGNORECASE).strip()
          added.append(card)
@@ -31,9 +32,6 @@ def editDeck():
     print(f"Unsure: {unsure}\n")
     print(f"Added: {added}\n")
     print(f"Removed: {removed}\n")
-     
-    
-    
   except Exception as e:
      print(f"An error occurred: {e}")
   #Adding cards
