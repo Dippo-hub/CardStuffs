@@ -4,7 +4,7 @@ import requests
 import pandas as pd
 import streamlit as st
 
-#run command: 
+#run command: python3 -m streamlit run card_app.py
 
 def getDeckChanges():
      decklist=st.text_input("Enter decklist file: ")
