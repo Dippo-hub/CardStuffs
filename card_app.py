@@ -1,5 +1,4 @@
 import re
-import fileinput
 import requests
 import pandas as pd
 import streamlit as st
@@ -8,6 +7,7 @@ import streamlit as st
 
 def getDeckChanges():
      decklist=st.text_input("Enter decklist file: ")
+     global added, removed, unsure
      added=[]
      removed=[]
      unsure=[]
