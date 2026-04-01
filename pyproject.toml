@@ -4,7 +4,6 @@ version = "0.0.1"
 description = "protoype"
 readme = "README.md"
 requires-python = ">=3.12"
-[project dependencies]
 dependencies = [
     "streamlit>=1.55.0",
     "pandas>=2.3.3",
