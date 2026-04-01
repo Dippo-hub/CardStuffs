@@ -91,19 +91,103 @@ def displayDeck(deckToSee):
                     art[stripCard(line)] = img_file.read()
             deck=pd.DataFrame({
                 'Card Name': cards,
-                'Image': art.values()
+                'Image': art
             }).set_index('Card Name')
-            st.table(deck)
+            return st.table(deck)
     except Exception as e:
         st.error(f"An error occurred: [{e}].")
+def addDeckToList(deckToAdd):
+    forestCount=0
+    addForest=False
+    plainsCount=0
+    addPlains=False
+    mountainCount=0
+    addMountains=False
+    swampCount=0
+    addSwamps=False
+    islandCount=0
+    addIslands=False
+    try:
+        cmdr_name=stripCard(deckToAdd)
+        with open(f'{path}/decks/{cmdr_name}/{cmdr_name}.txt', 'r+') as f:
+            f.write(f'{cmdr_name}\n')
+            st.write(f'Added {cmdr_name} to decklist.')
+    except Exception as e:
+        st.error(f"An error occurred: [{e}] while creating decklist.")
+    creation=st.text_input("Enter cards to add to decklist (such as 'Export as plain text' from Moxfield): ").split(r' \d ', text=True)
+    try:
+        with open(f'{path}/decks/{cmdr_name}/{cmdr_name}.txt', 'r+') as f:
+            for card in creation:
+                if card.strip() == '':
+                    continue
+                if forestCount>=0 and card.strip().lower()=='forest':
+                    forestCount+=1
+                    addForests  = True
+                    continue
+                elif plainsCount>=0 and card.strip().lower()=='plains':
+                    plainsCount+=1
+                    addPlains = True
+                    continue
+                elif mountainCount>=0 and card.strip().lower()=='mountain':
+                    mountainCount+=1   
+                    addMountains = True 
+                    continue
+                elif swampCount>=0 and card.strip().lower()=='swamp':
+                    swampCount+=1
+                    addSwamps = True
+                    continue
+                elif islandCount>=0 and card.strip().lower()=='island':
+                    islandCount+=1    
+                    addIslands = True
+                    continue
+                else :
+                    card=stripCard(card)
+                    f.write(f'1, {card}\n')
+                    st.write(f'Added {card} to {cmdr_name} decklist.')
+            if addForests:
+                f.write(f'{forestCount} Forest\n')
+            if addPlains:
+                f.write(f'{plainsCount} Plains\n')
+            if addMountains:
+                f.write(f'{mountainCount} Mountain\n')
+            if addSwamps:
+                f.write(f'{swampCount} Swamp\n')
+            if addIslands:
+                f.write(f'{islandCount} Island\n')
+            st.write(f'Added basic lands to {cmdr_name} decklist.')
+    except Exception as e:
+        st.error(f"An error occurred: [{e}] while adding cards to decklist.")
+    try:
+        for line in creation:
+            card_name = stripCard(line)
+            response = requests.get(f"https://api.scryfall.com/cards/named?exact={card_name}")
+            if response.status_code == 200:
+                card_data = response.json()
+                image_url = card_data['image_uris']['normal']
+                image_response = requests.get(image_url)
+                if image_response.status_code == 200:
+                    with open(f'{path}/decks/{cmdr_name}/{stripCard(card_name)}.jpg', 'wb') as img_file:
+                        img_file.write(image_response.content)
+                else:
+                    st.error(f"Failed to download image for {card_name}.")
+            else:
+                st.error(f"Failed to fetch data for {card_name}.")
+    except Exception as e:
+        st.error(f"An error occurred: [{e}] while fetching card data and getting images.")
 path = '/workspace/Cardstuffs'
 
 st.title("Deck Editor")
-def main():
-   if st.button("Edit Deck"):
+#st.button("Edit Deck", key="edit")
+#st.button("Display Deck", key="display")
+if __name__ == "__main__"  :
+    if st.button("Display Deck"):
+       displayDeck(st.text_input("Which commander to display? "))
+    if st.button("Edit Deck"):
        getDeckChanges()
        deckToChange=st.text_input("Which commander to edit? ")
        addCards(deckToChange)
        removeCards(deckToChange)
        displayDeck(deckToChange)
+    if st.button("Add Deck to List"):
+       addDeckToList(st.text_input("Which commander to add? "))
     
