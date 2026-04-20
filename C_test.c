@@ -1,11 +1,13 @@
 #include <stdio.h>
 #include <ctype.h>
+#include <stdlib.h>
+#include <time.h>
 
 float calc() {
     float a, b, result;
     char operator;
     printf("Enter A to add, S to subtract, M to multiply, D to divide, or Q to exit: ");
-    while ( operator != EOF) {
+    while ( operator != 'Q') {
         scanf(" %c", &operator); // Read operator input
         operator = toupper(operator); // Convert operator to uppercase for uniformity
         if (operator != 'Q') {
@@ -83,8 +85,109 @@ void grade_tracker() {
     printf("D: %d, %.2f%% of total.\n", dCount, (float)dCount / count * 100);
     printf("F: %d, %.2f%% of total.\n", fCount, (float)fCount / count * 100);
 }
-int main() {
-    //calc();
-    grade_tracker();
+
+int test_1()
+{
+  int a, b;
+  scanf("%d %d", &a, &b);
+  //returns true if a=b
+  if( a == b) {
+      printf("True");
+  } else {
+      printf("False");
+  }
+    printf("\n %d %d", a, b);
     return 0;
 }
+
+int test_2() {
+    int array[]={1, 7, 3, 4, 5, 4};
+    int max=array[0];
+    for(int i=0; i<6; i++) {
+        if (array[i]>max) {
+            max=array[i];
+        } 
+    }
+    printf("%d", max);
+    return 0;
+}
+ int multiply(int x, int y) {
+     return x*y;
+ }
+ 
+void test_3() {
+    int length=0;
+    int upperCount=0;
+    int lowerCount=0; 
+    int digitCount=0; 
+    int specialCount=0;
+    //as a string, we have "Happy Birthday." C reads strings as arrays of characters. Thus,
+    char string[100];
+    //therefore we can use For loops to iterate through them.
+    //if we wanted to use any string, fgets(variable to assign, size of array, standard input (keyboard))
+    printf("String: ");
+    fgets(string,100,stdin);
+    for(int t=0;string[t]!='\0';t++){
+        //if we wanted to count how long the string is
+        length++;
+        //uppercase characters
+        if(isupper(string[t])) {
+            upperCount++;
+        //a similar function exists for lowercase, digits, and alphanumeric characters. 
+        //(Can you apply this to special characters?)
+        }
+    }
+    printf("\n String is %d characters long and has %d uppercase characters, %d lowercase characters, %d digits, and %d special characters.", length, upperCount, lowerCount, digitCount, specialCount);
+}
+ 
+void file_operations() {
+    srand(time(0)); // Initialize random number generator
+    char filename[100];
+    printf("Enter filename: ");
+    scanf("%s", filename);
+    FILE *file = fopen(filename, "r");
+    if (file == NULL) {
+        printf("Error opening file.\n");
+        return;
+    }
+    char line[256];
+    while (fgets(line, sizeof(line), file)) {
+        printf("%s", line);
+        for(int i=0; line[i]!='\0'; i++) {
+            line[i] = line[i] + rand() % 13 + 1; // Shift character by a random value between 1 and 13
+        }
+        printf("%s\n", line);
+    }
+    //MUST HAVE FCLOSE
+    fclose(file);
+    printf("File closed successfully.\n");
+}
+    
+
+
+int main() {
+    //int c, d;
+    //test_1();
+    //test_2();
+    //scanf("%d %d", &c, &d);
+    //printf("\n %d", multiply(c,d));
+    //test string = "Ant1m@tter Dimens10n$"
+    //test_3();
+    //calc();
+    //grade_tracker();
+    file_operations();
+    return 0;
+    
+}
+
+/*  else if (islower(string[t])) {
+            lowerCount++;
+        } else if (isdigit(string[t])) {
+            digitCount++;
+        } else if (isalnum(string[t]) != 1 && (string[t]!='\n')) {
+            specialCount++;
+        }
+*/
+
+
+
