@@ -1,0 +1,1 @@
+search_list=["CMC","EDH Rank","Salty","Price"]

@@ -1,0 +1,112 @@
+***************************************
+name = Magda, the Hoardmaster
+type = Legendary Creature — Dwarf Berserker
+colorIdentity = R
+manaCost = {1}{R}
+power = 2
+toughness = 2
+keywords = Treasure
+manaValue = 2.0
+rarity = rare
+supertypes = Legendary
+LEGAL = Legal
+SETCODE = OTJ
+SET ENGLISH NAME = Outlaws of Thunder Junction
+text = Whenever you commit a crime, create a tapped Treasure token. This ability triggers only once each turn. (Targeting opponents, anything they control, and/or cards in their graveyards is a crime.)
+Sacrifice three Treasures: Create a 4/4 red Scorpion Dragon creature token with flying and haste. Activate only as a sorcery.
+***************************************
+name = Vadmir, New Blood
+type = Legendary Creature — Vampire Rogue
+colorIdentity = B
+manaCost = {1}{B}
+power = 2
+toughness = 2
+keywords = 
+manaValue = 2.0
+rarity = rare
+supertypes = Legendary
+LEGAL = Legal
+SETCODE = OTJ
+SET ENGLISH NAME = Outlaws of Thunder Junction
+text = Whenever you commit a crime, put a +1/+1 counter on Vadmir. This ability triggers only once each turn. (Targeting opponents, anything they control, and/or cards in their graveyards is a crime.)
+As long as Vadmir has four or more +1/+1 counters on it, it has menace and lifelink.
+***************************************
+name = Kaervek, the Punisher
+type = Legendary Creature — Human Warlock
+colorIdentity = B
+manaCost = {1}{B}{B}
+power = 3
+toughness = 3
+keywords = 
+manaValue = 3.0
+rarity = rare
+supertypes = Legendary
+LEGAL = Legal
+SETCODE = OTJ
+SET ENGLISH NAME = Outlaws of Thunder Junction
+text = Whenever you commit a crime, exile up to one target black card from your graveyard and copy it. You may cast the copy. If you do, you lose 2 life. (Targeting opponents, anything they control, and/or cards in their graveyards is a crime. Copies of permanent spells become tokens.)
+***************************************
+name = Lazav, Familiar Stranger
+type = Legendary Creature — Shapeshifter
+colorIdentity = B, U
+manaCost = {1}{U}{B}
+power = 1
+toughness = 4
+keywords = 
+manaValue = 3.0
+rarity = uncommon
+supertypes = Legendary
+LEGAL = Legal
+SETCODE = OTJ
+SET ENGLISH NAME = Outlaws of Thunder Junction
+text = Whenever you commit a crime, put a +1/+1 counter on Lazav. Then you may exile a card from a graveyard. If a creature card was exiled this way, you may have Lazav become a copy of that card until end of turn. This ability triggers only once each turn. (Targeting opponents, anything they control, and/or cards in their graveyards is a crime.)
+***************************************
+name = Marchesa, Dealer of Death
+type = Legendary Creature — Human Rogue
+colorIdentity = B, R, U
+manaCost = {U}{B}{R}
+power = 3
+toughness = 4
+keywords = 
+manaValue = 3.0
+rarity = rare
+supertypes = Legendary
+LEGAL = Legal
+SETCODE = OTJ
+SET ENGLISH NAME = Outlaws of Thunder Junction
+text = Whenever you commit a crime, you may pay {1}. If you do, look at the top two cards of your library. Put one of them into your hand and the other into your graveyard. (Targeting opponents, anything they control, and/or cards in their graveyards is a crime.)
+***************************************
+name = Oko, the Ringleader
+type = Legendary Planeswalker — Oko
+colorIdentity = G, U
+manaCost = {2}{G}{U}
+power = 
+toughness = 
+keywords = 
+manaValue = 4.0
+rarity = mythic
+supertypes = Legendary
+LEGAL = Legal
+SETCODE = OTJ
+SET ENGLISH NAME = Outlaws of Thunder Junction
+text = At the beginning of combat on your turn, Oko becomes a copy of up to one target creature you control until end of turn, except he has hexproof.
+[+1]: Draw two cards. If you've committed a crime this turn, discard a card. Otherwise, discard two cards.
+[−1]: Create a 3/3 green Elk creature token.
+[−5]: For each other nonland permanent you control, create a token that's a copy of that permanent.
+***************************************
+name = Gisa, the Hellraiser
+type = Legendary Creature — Human Warlock
+colorIdentity = B
+manaCost = {3}{B}{B}
+power = 4
+toughness = 4
+keywords = Ward
+manaValue = 5.0
+rarity = mythic
+supertypes = Legendary
+LEGAL = Legal
+SETCODE = OTJ
+SET ENGLISH NAME = Outlaws of Thunder Junction
+text = Ward—{2}, Pay 2 life.
+Skeletons and Zombies you control get +1/+1 and have menace.
+Whenever you commit a crime, create two tapped 2/2 blue and black Zombie Rogue creature tokens. This ability triggers only once each turn. (Targeting opponents, anything they control, and/or cards in their graveyards is a crime.)

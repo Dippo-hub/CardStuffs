@@ -1,0 +1,609 @@
+***************************************
+name = Magda, the Hoardmaster
+artist 0 -> 
+Diego Gisbert
+artistIds 1 -> 3f4e975d-092c-40e4-b850-2d582bf4b5cb
+asciiName 2 -> 
+attractionLights 3 -> 
+availability 4 -> arena, mtgo, paper
+boosterTypes 5 -> default
+borderColor 6 -> black
+cardParts 7 -> 
+colorIdentity 8 -> R
+colorIndicator 9 -> 
+colors 10 -> R
+defense 11 -> 
+duelDeck 12 -> 
+edhrecRank 13 -> 2100.0
+edhrecSaltiness 14 -> 0.3
+faceConvertedManaCost 15 -> 
+faceFlavorName 16 -> 
+faceManaValue 17 -> 
+faceName 18 -> 
+facePrintedName 19 -> 
+finishes 20 -> nonfoil, foil
+flavorName 21 -> 
+flavorText 22 -> 
+frameEffects 23 -> legendary
+frameVersion 24 -> 2015
+hand 25 -> 
+hasAlternativeDeckLimit 26 -> 
+hasContentWarning 27 -> 
+hasFoil 28 -> True
+hasNonFoil 29 -> True
+isAlternative 30 -> 
+isFullArt 31 -> 
+isFunny 32 -> 
+isGameChanger 33 -> 
+isOnlineOnly 34 -> 
+isOversized 35 -> 
+isPromo 36 -> 
+isRebalanced 37 -> 
+isReprint 38 -> 
+isReserved 39 -> 
+isStarter 40 -> 
+isStorySpotlight 41 -> 
+isTextless 42 -> 
+isTimeshifted 43 -> 
+keywords 44 -> Treasure
+language 45 -> English
+layout 46 -> normal
+leadershipSkills 47 -> {"brawl": true, "commander": true, "oathbreaker": false}
+life 48 -> 
+loyalty 49 -> 
+manaCost 50 -> {1}{R}
+manaValue 51 -> 2.0
+name 52 -> Magda, the Hoardmaster
+number 53 -> 133
+originalPrintings 54 -> 
+originalReleaseDate 55 -> 
+originalText 56 -> Whenever you commit a crime, create a tapped Treasure token. This ability triggers only once each turn. (Targeting opponents, anything they control, and/or cards in their graveyards is a crime.)\nSacrifice three Treasures: Create a 4/4 red Scorpion Dragon creature token with flying and haste. Activate only as a sorcery.
+otherFaceIds 57 -> 
+power 58 -> 2
+printedName 59 -> 
+printedText 60 -> 
+printedType 61 -> 
+printings 62 -> OTJ, POTJ
+promoTypes 63 -> 
+rarity 64 -> rare
+rebalancedPrintings 65 -> 
+relatedCards 66 -> 
+securityStamp 67 -> oval
+setCode 68 -> OTJ
+side 69 -> 
+signature 70 -> 
+sourceProducts 71 -> {"foil": ["416d0271-af56-5586-ae21-688f2cb3d9d4", "6b307a92-0a52-5ecc-aaeb-1fa4180ec7ad", "7c02f937-ddc8-57af-9cf7-a09f7c0be1c3"], "nonfoil": ["30dc2201-4edd-5ef6-a1ad-e05740d25f1c", "7c02f937-ddc8-57af-9cf7-a09f7c0be1c3"]}
+subsets 72 -> 
+subtypes 73 -> Dwarf, Berserker
+supertypes 74 -> Legendary
+text 75 -> Whenever you commit a crime, create a tapped Treasure token. This ability triggers only once each turn. (Targeting opponents, anything they control, and/or cards in their graveyards is a crime.)\nSacrifice three Treasures: Create a 4/4 red Scorpion Dragon creature token with flying and haste. Activate only as a sorcery.
+toughness 76 -> 2
+type 77 -> Legendary Creature — Dwarf Berserker
+types 78 -> Creature
+uuid 79 -> 62c7bde6-8890-5a3d-ba91-71a3376b6a3b
+variations 80 -> 65ee59c5-5b60-5ae2-b944-f762e5281ae0, b5b5322f-0ea1-5652-99a4-cf3a14fcfb2e
+watermark
+ 81 -> 
+
+***************************************
+name = Vadmir, New Blood
+artist 0 -> 
+Andreas Zafiratos
+artistIds 1 -> e2f13a9a-57c5-40de-81d4-3b0723899cdf
+asciiName 2 -> 
+attractionLights 3 -> 
+availability 4 -> arena, mtgo, paper
+boosterTypes 5 -> default
+borderColor 6 -> black
+cardParts 7 -> 
+colorIdentity 8 -> B
+colorIndicator 9 -> 
+colors 10 -> B
+defense 11 -> 
+duelDeck 12 -> 
+edhrecRank 13 -> 8018.0
+edhrecSaltiness 14 -> 
+faceConvertedManaCost 15 -> 
+faceFlavorName 16 -> 
+faceManaValue 17 -> 
+faceName 18 -> 
+facePrintedName 19 -> 
+finishes 20 -> nonfoil, foil
+flavorName 21 -> 
+flavorText 22 -> 
+frameEffects 23 -> legendary
+frameVersion 24 -> 2015
+hand 25 -> 
+hasAlternativeDeckLimit 26 -> 
+hasContentWarning 27 -> 
+hasFoil 28 -> True
+hasNonFoil 29 -> True
+isAlternative 30 -> 
+isFullArt 31 -> 
+isFunny 32 -> 
+isGameChanger 33 -> 
+isOnlineOnly 34 -> 
+isOversized 35 -> 
+isPromo 36 -> 
+isRebalanced 37 -> 
+isReprint 38 -> 
+isReserved 39 -> 
+isStarter 40 -> 
+isStorySpotlight 41 -> 
+isTextless 42 -> 
+isTimeshifted 43 -> 
+keywords 44 -> 
+language 45 -> English
+layout 46 -> normal
+leadershipSkills 47 -> {"brawl": true, "commander": true, "oathbreaker": false}
+life 48 -> 
+loyalty 49 -> 
+manaCost 50 -> {1}{B}
+manaValue 51 -> 2.0
+name 52 -> Vadmir, New Blood
+number 53 -> 113
+originalPrintings 54 -> 
+originalReleaseDate 55 -> 
+originalText 56 -> Whenever you commit a crime, put a +1/+1 counter on Vadmir, New Blood. This ability triggers only once each turn. (Targeting opponents, anything they control, and/or cards in their graveyards is a crime.)\nAs long as Vadmir has four or more +1/+1 counters on it, it has menace and lifelink.
+otherFaceIds 57 -> 
+power 58 -> 2
+printedName 59 -> 
+printedText 60 -> 
+printedType 61 -> 
+printings 62 -> OTJ, POTJ
+promoTypes 63 -> 
+rarity 64 -> rare
+rebalancedPrintings 65 -> 
+relatedCards 66 -> 
+securityStamp 67 -> oval
+setCode 68 -> OTJ
+side 69 -> 
+signature 70 -> 
+sourceProducts 71 -> {"foil": ["416d0271-af56-5586-ae21-688f2cb3d9d4", "6b307a92-0a52-5ecc-aaeb-1fa4180ec7ad", "7c02f937-ddc8-57af-9cf7-a09f7c0be1c3"], "nonfoil": ["30dc2201-4edd-5ef6-a1ad-e05740d25f1c", "7c02f937-ddc8-57af-9cf7-a09f7c0be1c3"]}
+subsets 72 -> 
+subtypes 73 -> Vampire, Rogue
+supertypes 74 -> Legendary
+text 75 -> Whenever you commit a crime, put a +1/+1 counter on Vadmir. This ability triggers only once each turn. (Targeting opponents, anything they control, and/or cards in their graveyards is a crime.)\nAs long as Vadmir has four or more +1/+1 counters on it, it has menace and lifelink.
+toughness 76 -> 2
+type 77 -> Legendary Creature — Vampire Rogue
+types 78 -> Creature
+uuid 79 -> a992f77b-6dbf-5d0d-a328-87491eb2318b
+variations 80 -> d86fc688-fca9-5537-9ec5-942fda698dd6
+watermark
+ 81 -> 
+
+***************************************
+name = Kaervek, the Punisher
+artist 0 -> 
+Cristi Balanescu
+artistIds 1 -> c09ede88-a1b5-4a18-9895-dc8a965d28a5
+asciiName 2 -> 
+attractionLights 3 -> 
+availability 4 -> arena, mtgo, paper
+boosterTypes 5 -> default
+borderColor 6 -> black
+cardParts 7 -> 
+colorIdentity 8 -> B
+colorIndicator 9 -> 
+colors 10 -> B
+defense 11 -> 
+duelDeck 12 -> 
+edhrecRank 13 -> 5929.0
+edhrecSaltiness 14 -> 0.45
+faceConvertedManaCost 15 -> 
+faceFlavorName 16 -> 
+faceManaValue 17 -> 
+faceName 18 -> 
+facePrintedName 19 -> 
+finishes 20 -> nonfoil, foil
+flavorName 21 -> 
+flavorText 22 -> 
+frameEffects 23 -> legendary
+frameVersion 24 -> 2015
+hand 25 -> 
+hasAlternativeDeckLimit 26 -> 
+hasContentWarning 27 -> 
+hasFoil 28 -> True
+hasNonFoil 29 -> True
+isAlternative 30 -> 
+isFullArt 31 -> 
+isFunny 32 -> 
+isGameChanger 33 -> 
+isOnlineOnly 34 -> 
+isOversized 35 -> 
+isPromo 36 -> 
+isRebalanced 37 -> 
+isReprint 38 -> 
+isReserved 39 -> 
+isStarter 40 -> 
+isStorySpotlight 41 -> 
+isTextless 42 -> 
+isTimeshifted 43 -> 
+keywords 44 -> 
+language 45 -> English
+layout 46 -> normal
+leadershipSkills 47 -> {"brawl": true, "commander": true, "oathbreaker": false}
+life 48 -> 
+loyalty 49 -> 
+manaCost 50 -> {1}{B}{B}
+manaValue 51 -> 3.0
+name 52 -> Kaervek, the Punisher
+number 53 -> 92
+originalPrintings 54 -> 
+originalReleaseDate 55 -> 
+originalText 56 -> Whenever you commit a crime, exile up to one target black card from your graveyard and copy it. You may cast the copy. If you do, you lose 2 life. (Targeting opponents, anything they control, and/or cards in their graveyards is a crime. Copies of permanent spells become tokens.)
+otherFaceIds 57 -> 
+power 58 -> 3
+printedName 59 -> 
+printedText 60 -> 
+printedType 61 -> 
+printings 62 -> OTJ, POTJ
+promoTypes 63 -> 
+rarity 64 -> rare
+rebalancedPrintings 65 -> 
+relatedCards 66 -> 
+securityStamp 67 -> oval
+setCode 68 -> OTJ
+side 69 -> 
+signature 70 -> 
+sourceProducts 71 -> {"foil": ["416d0271-af56-5586-ae21-688f2cb3d9d4", "6b307a92-0a52-5ecc-aaeb-1fa4180ec7ad", "7c02f937-ddc8-57af-9cf7-a09f7c0be1c3"], "nonfoil": ["30dc2201-4edd-5ef6-a1ad-e05740d25f1c", "7c02f937-ddc8-57af-9cf7-a09f7c0be1c3"]}
+subsets 72 -> 
+subtypes 73 -> Human, Warlock
+supertypes 74 -> Legendary
+text 75 -> Whenever you commit a crime, exile up to one target black card from your graveyard and copy it. You may cast the copy. If you do, you lose 2 life. (Targeting opponents, anything they control, and/or cards in their graveyards is a crime. Copies of permanent spells become tokens.)
+toughness 76 -> 3
+type 77 -> Legendary Creature — Human Warlock
+types 78 -> Creature
+uuid 79 -> dd1288f4-e995-5448-b1c2-6ce723204fb3
+variations 80 -> 6e4d9a40-74e3-519f-84f9-3e1cfa7cc4af
+watermark
+ 81 -> 
+
+***************************************
+name = Lazav, Familiar Stranger
+artist 0 -> 
+Tyler Jacobson
+artistIds 1 -> 522af130-8db4-4b4b-950c-6e2b246339cf
+asciiName 2 -> 
+attractionLights 3 -> 
+availability 4 -> arena, mtgo, paper
+boosterTypes 5 -> default
+borderColor 6 -> black
+cardParts 7 -> 
+colorIdentity 8 -> B, U
+colorIndicator 9 -> 
+colors 10 -> B, U
+defense 11 -> 
+duelDeck 12 -> 
+edhrecRank 13 -> 12193.0
+edhrecSaltiness 14 -> 0.28
+faceConvertedManaCost 15 -> 
+faceFlavorName 16 -> 
+faceManaValue 17 -> 
+faceName 18 -> 
+facePrintedName 19 -> 
+finishes 20 -> nonfoil, foil
+flavorName 21 -> 
+flavorText 22 -> 
+frameEffects 23 -> legendary
+frameVersion 24 -> 2015
+hand 25 -> 
+hasAlternativeDeckLimit 26 -> 
+hasContentWarning 27 -> 
+hasFoil 28 -> True
+hasNonFoil 29 -> True
+isAlternative 30 -> 
+isFullArt 31 -> 
+isFunny 32 -> 
+isGameChanger 33 -> 
+isOnlineOnly 34 -> 
+isOversized 35 -> 
+isPromo 36 -> 
+isRebalanced 37 -> 
+isReprint 38 -> 
+isReserved 39 -> 
+isStarter 40 -> 
+isStorySpotlight 41 -> 
+isTextless 42 -> 
+isTimeshifted 43 -> 
+keywords 44 -> 
+language 45 -> English
+layout 46 -> normal
+leadershipSkills 47 -> {"brawl": true, "commander": true, "oathbreaker": false}
+life 48 -> 
+loyalty 49 -> 
+manaCost 50 -> {1}{U}{B}
+manaValue 51 -> 3.0
+name 52 -> Lazav, Familiar Stranger
+number 53 -> 216
+originalPrintings 54 -> 
+originalReleaseDate 55 -> 
+originalText 56 -> Whenever you commit a crime, put a +1/+1 counter on Lazav, Familiar Stranger. Then you may exile a card from a graveyard. If a creature card was exiled this way, you may have Lazav become a copy of that card until end of turn. This ability triggers only once each turn. (Targeting opponents, anything they control, and/or cards in their graveyards is a crime.)
+otherFaceIds 57 -> 
+power 58 -> 1
+printedName 59 -> 
+printedText 60 -> 
+printedType 61 -> 
+printings 62 -> OTJ
+promoTypes 63 -> 
+rarity 64 -> uncommon
+rebalancedPrintings 65 -> 
+relatedCards 66 -> 
+securityStamp 67 -> 
+setCode 68 -> OTJ
+side 69 -> 
+signature 70 -> 
+sourceProducts 71 -> {"foil": ["416d0271-af56-5586-ae21-688f2cb3d9d4", "6b307a92-0a52-5ecc-aaeb-1fa4180ec7ad", "7c02f937-ddc8-57af-9cf7-a09f7c0be1c3"], "nonfoil": ["30dc2201-4edd-5ef6-a1ad-e05740d25f1c", "7c02f937-ddc8-57af-9cf7-a09f7c0be1c3"]}
+subsets 72 -> 
+subtypes 73 -> Shapeshifter
+supertypes 74 -> Legendary
+text 75 -> Whenever you commit a crime, put a +1/+1 counter on Lazav. Then you may exile a card from a graveyard. If a creature card was exiled this way, you may have Lazav become a copy of that card until end of turn. This ability triggers only once each turn. (Targeting opponents, anything they control, and/or cards in their graveyards is a crime.)
+toughness 76 -> 4
+type 77 -> Legendary Creature — Shapeshifter
+types 78 -> Creature
+uuid 79 -> 53743464-3b9a-5286-9c1b-d9e5a93cd875
+variations 80 -> 
+watermark
+ 81 -> 
+
+***************************************
+name = Marchesa, Dealer of Death
+artist 0 -> 
+Ryan Pancoast
+artistIds 1 -> 89cc9475-dda2-4d13-bf88-54b92867a25c
+asciiName 2 -> 
+attractionLights 3 -> 
+availability 4 -> arena, mtgo, paper
+boosterTypes 5 -> default
+borderColor 6 -> black
+cardParts 7 -> 
+colorIdentity 8 -> B, R, U
+colorIndicator 9 -> 
+colors 10 -> B, R, U
+defense 11 -> 
+duelDeck 12 -> 
+edhrecRank 13 -> 10489.0
+edhrecSaltiness 14 -> 0.19
+faceConvertedManaCost 15 -> 
+faceFlavorName 16 -> 
+faceManaValue 17 -> 
+faceName 18 -> 
+facePrintedName 19 -> 
+finishes 20 -> nonfoil, foil
+flavorName 21 -> 
+flavorText 22 -> "You should have folded when you had the chance."
+frameEffects 23 -> legendary
+frameVersion 24 -> 2015
+hand 25 -> 
+hasAlternativeDeckLimit 26 -> 
+hasContentWarning 27 -> 
+hasFoil 28 -> True
+hasNonFoil 29 -> True
+isAlternative 30 -> 
+isFullArt 31 -> 
+isFunny 32 -> 
+isGameChanger 33 -> 
+isOnlineOnly 34 -> 
+isOversized 35 -> 
+isPromo 36 -> 
+isRebalanced 37 -> 
+isReprint 38 -> 
+isReserved 39 -> 
+isStarter 40 -> 
+isStorySpotlight 41 -> 
+isTextless 42 -> 
+isTimeshifted 43 -> 
+keywords 44 -> 
+language 45 -> English
+layout 46 -> normal
+leadershipSkills 47 -> {"brawl": true, "commander": true, "oathbreaker": false}
+life 48 -> 
+loyalty 49 -> 
+manaCost 50 -> {U}{B}{R}
+manaValue 51 -> 3.0
+name 52 -> Marchesa, Dealer of Death
+number 53 -> 220
+originalPrintings 54 -> 
+originalReleaseDate 55 -> 
+originalText 56 -> Whenever you commit a crime, you may pay {1}. If you do, look at the top two cards of your library. Put one of them into your hand and the other into your graveyard. (Targeting opponents, anything they control, and/or cards in their graveyards is a crime.)
+otherFaceIds 57 -> 
+power 58 -> 3
+printedName 59 -> 
+printedText 60 -> 
+printedType 61 -> 
+printings 62 -> OTJ, POTJ
+promoTypes 63 -> 
+rarity 64 -> rare
+rebalancedPrintings 65 -> 
+relatedCards 66 -> 
+securityStamp 67 -> oval
+setCode 68 -> OTJ
+side 69 -> 
+signature 70 -> 
+sourceProducts 71 -> {"foil": ["416d0271-af56-5586-ae21-688f2cb3d9d4", "6b307a92-0a52-5ecc-aaeb-1fa4180ec7ad", "7c02f937-ddc8-57af-9cf7-a09f7c0be1c3"], "nonfoil": ["30dc2201-4edd-5ef6-a1ad-e05740d25f1c", "7c02f937-ddc8-57af-9cf7-a09f7c0be1c3"]}
+subsets 72 -> 
+subtypes 73 -> Human, Rogue
+supertypes 74 -> Legendary
+text 75 -> Whenever you commit a crime, you may pay {1}. If you do, look at the top two cards of your library. Put one of them into your hand and the other into your graveyard. (Targeting opponents, anything they control, and/or cards in their graveyards is a crime.)
+toughness 76 -> 4
+type 77 -> Legendary Creature — Human Rogue
+types 78 -> Creature
+uuid 79 -> d3dadd18-1576-5f7f-8b1e-d263e56b1f6b
+variations 80 -> 6453614a-d397-52d4-8f15-c62c7d7cb4cc
+watermark
+ 81 -> 
+
+***************************************
+name = Oko, the Ringleader
+artist 0 -> 
+Magali Villeneuve
+artistIds 1 -> 9e6a55ae-be4d-4c23-a2a5-135737ffd879
+asciiName 2 -> 
+attractionLights 3 -> 
+availability 4 -> arena, mtgo, paper
+boosterTypes 5 -> default
+borderColor 6 -> black
+cardParts 7 -> 
+colorIdentity 8 -> G, U
+colorIndicator 9 -> 
+colors 10 -> G, U
+defense 11 -> 
+duelDeck 12 -> 
+edhrecRank 13 -> 10268.0
+edhrecSaltiness 14 -> 0.12
+faceConvertedManaCost 15 -> 
+faceFlavorName 16 -> 
+faceManaValue 17 -> 
+faceName 18 -> 
+facePrintedName 19 -> 
+finishes 20 -> nonfoil, foil
+flavorName 21 -> 
+flavorText 22 -> 
+frameEffects 23 -> 
+frameVersion 24 -> 2015
+hand 25 -> 
+hasAlternativeDeckLimit 26 -> 
+hasContentWarning 27 -> 
+hasFoil 28 -> True
+hasNonFoil 29 -> True
+isAlternative 30 -> 
+isFullArt 31 -> 
+isFunny 32 -> 
+isGameChanger 33 -> 
+isOnlineOnly 34 -> 
+isOversized 35 -> 
+isPromo 36 -> 
+isRebalanced 37 -> 
+isReprint 38 -> 
+isReserved 39 -> 
+isStarter 40 -> 
+isStorySpotlight 41 -> 
+isTextless 42 -> 
+isTimeshifted 43 -> 
+keywords 44 -> 
+language 45 -> English
+layout 46 -> normal
+leadershipSkills 47 -> {"brawl": true, "commander": false, "oathbreaker": true}
+life 48 -> 
+loyalty 49 -> 3
+manaCost 50 -> {2}{G}{U}
+manaValue 51 -> 4.0
+name 52 -> Oko, the Ringleader
+number 53 -> 223
+originalPrintings 54 -> 
+originalReleaseDate 55 -> 
+originalText 56 -> At the beginning of combat on your turn, Oko, the Ringleader becomes a copy of up to one target creature you control until end of turn, except he has hexproof.\n+1: Draw two cards. If you've committed a crime this turn, discard a card. Otherwise, discard two cards.\n−1: Create a 3/3 green Elk creature token.\n−5: For each other nonland permanent you control, create a token that's a copy of that permanent.
+otherFaceIds 57 -> 
+power 58 -> 
+printedName 59 -> 
+printedText 60 -> 
+printedType 61 -> 
+printings 62 -> OTJ, POTJ
+promoTypes 63 -> 
+rarity 64 -> mythic
+rebalancedPrintings 65 -> 
+relatedCards 66 -> 
+securityStamp 67 -> oval
+setCode 68 -> OTJ
+side 69 -> 
+signature 70 -> 
+sourceProducts 71 -> {"foil": ["416d0271-af56-5586-ae21-688f2cb3d9d4", "6b307a92-0a52-5ecc-aaeb-1fa4180ec7ad", "7c02f937-ddc8-57af-9cf7-a09f7c0be1c3"], "nonfoil": ["30dc2201-4edd-5ef6-a1ad-e05740d25f1c", "7c02f937-ddc8-57af-9cf7-a09f7c0be1c3"]}
+subsets 72 -> 
+subtypes 73 -> Oko
+supertypes 74 -> Legendary
+text 75 -> At the beginning of combat on your turn, Oko becomes a copy of up to one target creature you control until end of turn, except he has hexproof.\n[+1]: Draw two cards. If you've committed a crime this turn, discard a card. Otherwise, discard two cards.\n[−1]: Create a 3/3 green Elk creature token.\n[−5]: For each other nonland permanent you control, create a token that's a copy of that permanent.
+toughness 76 -> 
+type 77 -> Legendary Planeswalker — Oko
+types 78 -> Planeswalker
+uuid 79 -> 43bde815-4d50-5aa0-b03f-537f637ed158
+variations 80 -> ef245052-cde1-5a43-89cb-e05ab1a7ff6f, aebc46ed-7fb4-57dc-8073-59552fff2ef1
+watermark
+ 81 -> 
+
+***************************************
+name = Gisa, the Hellraiser
+artist 0 -> 
+Chris Rahn
+artistIds 1 -> 7742047e-0f80-4c0f-a530-d07460165e86
+asciiName 2 -> 
+attractionLights 3 -> 
+availability 4 -> arena, mtgo, paper
+boosterTypes 5 -> default
+borderColor 6 -> black
+cardParts 7 -> 
+colorIdentity 8 -> B
+colorIndicator 9 -> 
+colors 10 -> B
+defense 11 -> 
+duelDeck 12 -> 
+edhrecRank 13 -> 3128.0
+edhrecSaltiness 14 -> 0.47
+faceConvertedManaCost 15 -> 
+faceFlavorName 16 -> 
+faceManaValue 17 -> 
+faceName 18 -> 
+facePrintedName 19 -> 
+finishes 20 -> nonfoil, foil
+flavorName 21 -> 
+flavorText 22 -> 
+frameEffects 23 -> legendary
+frameVersion 24 -> 2015
+hand 25 -> 
+hasAlternativeDeckLimit 26 -> 
+hasContentWarning 27 -> 
+hasFoil 28 -> True
+hasNonFoil 29 -> True
+isAlternative 30 -> 
+isFullArt 31 -> 
+isFunny 32 -> 
+isGameChanger 33 -> 
+isOnlineOnly 34 -> 
+isOversized 35 -> 
+isPromo 36 -> 
+isRebalanced 37 -> 
+isReprint 38 -> 
+isReserved 39 -> 
+isStarter 40 -> 
+isStorySpotlight 41 -> 
+isTextless 42 -> 
+isTimeshifted 43 -> 
+keywords 44 -> Ward
+language 45 -> English
+layout 46 -> normal
+leadershipSkills 47 -> {"brawl": true, "commander": true, "oathbreaker": false}
+life 48 -> 
+loyalty 49 -> 
+manaCost 50 -> {3}{B}{B}
+manaValue 51 -> 5.0
+name 52 -> Gisa, the Hellraiser
+number 53 -> 89
+originalPrintings 54 -> 
+originalReleaseDate 55 -> 
+originalText 56 -> Ward—{2}, Pay 2 life.\nSkeletons and Zombies you control get +1/+1 and have menace.\nWhenever you commit a crime, create two tapped 2/2 blue and black Zombie Rogue creature tokens. This ability triggers only once each turn. (Targeting opponents, anything they control, and/or cards in their graveyards is a crime.)
+otherFaceIds 57 -> 
+power 58 -> 4
+printedName 59 -> 
+printedText 60 -> 
+printedType 61 -> 
+printings 62 -> OTJ, POTJ
+promoTypes 63 -> 
+rarity 64 -> mythic
+rebalancedPrintings 65 -> 
+relatedCards 66 -> 
+securityStamp 67 -> oval
+setCode 68 -> OTJ
+side 69 -> 
+signature 70 -> 
+sourceProducts 71 -> {"foil": ["416d0271-af56-5586-ae21-688f2cb3d9d4", "6b307a92-0a52-5ecc-aaeb-1fa4180ec7ad", "7c02f937-ddc8-57af-9cf7-a09f7c0be1c3"], "nonfoil": ["30dc2201-4edd-5ef6-a1ad-e05740d25f1c", "7c02f937-ddc8-57af-9cf7-a09f7c0be1c3"]}
+subsets 72 -> 
+subtypes 73 -> Human, Warlock
+supertypes 74 -> Legendary
+text 75 -> Ward—{2}, Pay 2 life.\nSkeletons and Zombies you control get +1/+1 and have menace.\nWhenever you commit a crime, create two tapped 2/2 blue and black Zombie Rogue creature tokens. This ability triggers only once each turn. (Targeting opponents, anything they control, and/or cards in their graveyards is a crime.)
+toughness 76 -> 4
+type 77 -> Legendary Creature — Human Warlock
+types 78 -> Creature
+uuid 79 -> da46f56f-f4a8-58de-8a30-f6bd1de92add
+variations 80 -> bba1619d-f59f-58a1-a4f4-171116f784af
+watermark
+ 81 -> 
+

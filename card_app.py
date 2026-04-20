@@ -211,27 +211,27 @@ path = '/workspaces/CardStuffs'
 
 st.title("Deck Editor")
 
-st.subheader("Edit Deck")
-st.button("Edit Deck", key="edit")
-deckToChange = st.text_input("What commander to edit? ")
+#st.subheader("Edit Deck")
+#st.button("Edit Deck", key="edit")
+#deckToChange = st.text_input("What commander to edit? ")
 
-st.subheader("Display Deck")
-st.button("Display Deck", key="display")
-display=st.text_input("Which commander to display? ")
+#st.subheader("Display Deck")
+#st.button("Display Deck", key="display")
+#display=st.text_input("Which commander to display? ")
 
-st.subheader("Add Deck")
-st.button("Add Deck to List", key="addDeck")
-deckToAdd = st.text_input("Which commander to add? ")
-if __name__ == "__main__"  :
-    if st.session_state.display:
-       displayDeck(display)
+#st.subheader("Add Deck")
+#st.button("Add Deck to List", key="addDeck")
+#deckToAdd = st.text_input("Which commander to add? ")
+#if __name__ == "__main__"  :
+    #if st.session_state.display:
+     #  displayDeck(display)
 
-    if st.session_state.edit:
-       getDeckChanges()
-       addCards(deckToChange)
-       removeCards(deckToChange)
-       displayDeck(deckToChange)
+    #if st.session_state.edit:
+     #  getDeckChanges()
+      # addCards(deckToChange)
+       #removeCards(deckToChange)
+       #displayDeck(deckToChange)
 
-    if st.session_state.addDeck:
-       addDeckToList(deckToAdd)
+    #if st.session_state.addDeck:
+     #  addDeckToList(deckToAdd)
     

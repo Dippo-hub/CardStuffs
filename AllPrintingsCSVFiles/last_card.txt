@@ -1,0 +1,83 @@
+artist -> James Paick
+artistIds -> 1a7be0a2-d8ac-45c7-b0a0-eb0886f47b5f
+asciiName -> 
+attractionLights -> 
+availability -> mtgo, paper
+boosterTypes -> default
+borderColor -> black
+cardParts -> 
+colorIdentity -> 
+colorIndicator -> 
+colors -> 
+defense -> 
+duelDeck -> 
+edhrecRank -> 15365
+edhrecSaltiness -> 0.29
+faceConvertedManaCost -> 
+faceFlavorName -> 
+faceManaValue -> 
+faceName -> 
+facePrintedName -> 
+finishes -> nonfoil, foil
+flavorName -> 
+flavorText -> 
+frameEffects -> 
+frameVersion -> 2015
+hand -> 
+hasAlternativeDeckLimit -> 
+hasContentWarning -> 
+isAlternative -> 
+isFullArt -> 
+isFunny -> 
+isGameChanger -> 
+isOnlineOnly -> 
+isOversized -> 
+isPromo -> 
+isRebalanced -> 
+isReprint -> 
+isReserved -> 
+isStorySpotlight -> 
+isTextless -> 
+isTimeshifted -> 
+keywords -> Crew
+language -> English
+layout -> normal
+leadershipSkills -> 
+life -> 
+loyalty -> 
+manaCost -> {6}
+manaValue -> 6.0
+name -> Demolition Stomper
+number -> 206
+originalPrintings -> 
+originalReleaseDate -> 
+originalText -> Demolition Stomper can't be blocked by creatures with power 2 or less.
+Crew 5 (Tap any number of creatures you control with total power 5 or more: This Vehicle becomes an artifact creature until end of turn.)
+otherFaceIds -> 
+power -> 10
+printedName -> 
+printedText -> 
+printedType -> 
+printings -> KLD, KLR
+producedMana -> 
+promoTypes -> 
+rarity -> uncommon
+rebalancedPrintings -> 
+relatedCards -> 
+securityStamp -> 
+setCode -> KLD
+side -> 
+signature -> 
+skuIds -> {"nonfoil":"bcb10f90-26ec-55c0-ac92-8190668a59c9","foil":"1fe46095-9134-55f5-a5f4-345be03e2413"}
+sourceProducts -> {"foil":["1f60d907-1bfa-5efa-b288-72b523570628","2fb85819-8bb7-565c-bc80-24f9482f50a2","366fb85d-7db5-5a42-b51b-3894e6638139","37a41f85-e9b4-5a4f-bac6-a49a4c2c483a","4029d377-6be5-5cb7-9a24-7a75fd82afdf","503118bc-9574-5668-8a76-d04aea7de15f","559b6d6c-fe2f-5a4b-8f39-b0a70f279148","5949493e-9647-58dd-a370-8edd9c35439b","7f2c27aa-95cb-5864-bbca-e064f6aa7417","80a87e80-58d3-5501-a933-0958672ce310","92c69f84-459a-5dd4-9c4b-bf63a5a85368","9a748fe4-fde6-5a7f-b10e-e080141114a3","c1d62920-29ca-5bbb-a67d-89ba7ba40c95","cf0f8060-bd6a-5d26-994c-202112e5177c","db28654f-baad-5d96-ae3e-21e6f58db0ac","f11efbac-a2d4-5228-acba-c858c60c12ac","fa5191f0-6d7e-546c-bb7e-b181d4e5782c"],"nonfoil":["1f60d907-1bfa-5efa-b288-72b523570628","2fb85819-8bb7-565c-bc80-24f9482f50a2","366fb85d-7db5-5a42-b51b-3894e6638139","37a41f85-e9b4-5a4f-bac6-a49a4c2c483a","4029d377-6be5-5cb7-9a24-7a75fd82afdf","503118bc-9574-5668-8a76-d04aea7de15f","559b6d6c-fe2f-5a4b-8f39-b0a70f279148","7f2c27aa-95cb-5864-bbca-e064f6aa7417","80a87e80-58d3-5501-a933-0958672ce310","92c69f84-459a-5dd4-9c4b-bf63a5a85368","9a748fe4-fde6-5a7f-b10e-e080141114a3","c1d62920-29ca-5bbb-a67d-89ba7ba40c95","cf0f8060-bd6a-5d26-994c-202112e5177c","db28654f-baad-5d96-ae3e-21e6f58db0ac","e0c2f26b-4cd9-5fbc-b529-e9187e98db7e","fa5191f0-6d7e-546c-bb7e-b181d4e5782c"]}
+subsets -> 
+subtypes -> Vehicle
+supertypes -> 
+text -> This Vehicle can't be blocked by creatures with power 2 or less.
+Crew 5 (Tap any number of creatures you control with total power 5 or more: This Vehicle becomes an artifact creature until end of turn.)
+toughness -> 7
+type -> Artifact — Vehicle
+types -> Artifact
+uuid -> 36108ccc-7a00-568f-8444-a7c3b542e04c
+variations -> 
+watermark -> 
