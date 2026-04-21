@@ -133,6 +133,7 @@ void test_3() {
         //uppercase characters
         if(isupper(string[t])) {
             upperCount++;
+             //if we wanted to convert uppercase to lowercase, we can use the tolower function.
         //a similar function exists for lowercase, digits, and alphanumeric characters. 
         //(Can you apply this to special characters?)
         }
@@ -148,13 +149,14 @@ void file_operations() {
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
         printf("Error opening file.\n");
-        return;
+        return 0;
     }
     char line[256];
     while (fgets(line, sizeof(line), file)) {
         printf("%s", line);
         for(int i=0; line[i]!='\0'; i++) {
-            line[i] = line[i] + rand() % 13 + 1; // Shift character by a random value between 1 and 13
+            //line[i] = line[i] + rand() % 13 + 1; // Shift character by a random value between 1 and 13
+            line[i]= tolower(line[i]);
         }
         printf("%s\n", line);
     }
@@ -163,10 +165,16 @@ void file_operations() {
     printf("File closed successfully.\n");
 }
     
-
+int factorial(int n) {
+    if (n == 0) {
+        return 1;
+    } else {
+        return n * factorial(n - 1);
+    }
+}
 
 int main() {
-    //int c, d;
+    int c, d;
     //test_1();
     //test_2();
     //scanf("%d %d", &c, &d);
@@ -175,7 +183,9 @@ int main() {
     //test_3();
     //calc();
     //grade_tracker();
-    file_operations();
+    //file_operations();
+    scanf("%d", &d);
+    printf("%d\n", factorial(d));
     return 0;
     
 }

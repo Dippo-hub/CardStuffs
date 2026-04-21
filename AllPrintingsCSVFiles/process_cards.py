@@ -1,1 +1,1 @@
-search_list=["CMC","EDH Rank","Salty","Price"]
+sort_by_list=["CMC","EDH Rank","Salty","Price"]
