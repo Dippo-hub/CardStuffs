@@ -2,6 +2,14 @@ import requests
 import os
 import streamlit as st
 from card_app import stripCard
+def stripCardForSearch(name):
+    trimmed = name.strip()
+    if len(trimmed) > 2:
+        trimmed = trimmed[2:]
+    else:
+        trimmed = ""
+    return trimmed.lower().replace(" ", "-").replace(",", "").replace("'", "").replace(".", "").replace(":", "").replace("!", "").replace("?", "")
+
 
 deck=[]
 removed=[]
@@ -14,9 +22,8 @@ class Card:
     def __init__(self, name):
         self.name = name
         self.stripped_name = stripCard(name)
+        self.image_search_name = stripCardForSearch(name)
         self.image_url = self.get_image_url()
-        self.is_class = True
-        self.amount = 1
         if self.name.strip().lower() in ['forest', 'plains', 'mountain', 'swamp', 'island']:
             self.is_basic_land = True
         else:
@@ -24,15 +31,17 @@ class Card:
 
     def get_image_url(self):
         try:
-            response = requests.get(f"https://api.scryfall.com/cards/named?exact={self.stripped_name}")
+
+            response = requests.get(f"https://api.scryfall.com/cards/named?exact={self.image_search_name}")
             if response.status_code == 200:
                 data = response.json()
                 return data['image_uris']['normal']
             else:
-                return None
+                return self.name
         except Exception as e:
             print(f"An error occurred while fetching image URL for {self.name}: {e}")
             return None
+        
     def add_to_decklist(self, cmdr_name):
         try:
             cmdr_name = stripCard(cmdr_name)
@@ -69,13 +78,26 @@ class Card:
         except Exception as e:
             print(f"An error occurred while removing {self.name}: {e}")
             st.error(f"An error occurred while removing {self.name}: {e}")
+    
+    def show_image(self):
+        if self.image_url:
+            st.sidebar.image(self.image_url, caption=self.name)
+        else:
+            st.sidebar.write(f"No image available for {self.image_search_name}.")
 
 class BasicLand(Card):
     def __init__(self, name):
         super().__init__(name)
         self.is_basic_land = True
 
+class Commander(Card):
+    def __init__(self, name):
+        super().__init__(name)
+        self.is_commander = True
+        self.image_search_name = stripCard(name)
+
 menu = st.selectbox("Select an option", options=['Please Select an Option', 'Add Cards', 'Remove Cards', 'View Decklists', 'Quit'], key='menu', placeholder="Please Select an Option")
+st.sidebar.title("Images here:")
 if __name__ == "__main__":
         if menu == 'Please Select an Option':
             pass
@@ -127,11 +149,19 @@ if __name__ == "__main__":
                 deck_path = f'{path}/{cmdr_name}/{stripCard(cmdr_name)}_decklist.txt'
                 if os.path.exists(deck_path):
                     with open(deck_path, 'r') as f:
-                        decklist = f.read()
-                        if decklist.strip() == "":
+                        cards = [line.strip() for line in f if line.strip()]
+
+                        if not cards:
                             st.info(f"{cmdr_name}'s decklist is currently empty.")
                         else:
-                            st.text_area(f"{cmdr_name}'s Decklist", value=decklist, height=300)
+                            selected_card = st.selectbox("Select a card to view", options=cards)
+                            st.text_area(f"{cmdr_name}'s Decklist", value="\n".join(cards), height=300, key='display_area')
+                            cmdr_name = Commander(cmdr_name)
+                            cmdr_name.show_image()
+
+                            if selected_card:
+                                card = Card(selected_card)
+                                card.show_image()
                 else:
                     st.error(f"No decklist found for {cmdr_name}.")
 
