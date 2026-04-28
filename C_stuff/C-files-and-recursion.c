@@ -1,7 +1,23 @@
 #include <stdio.h>
 #include <ctype.h>
 #include <stdlib.h> 
-#include <time.h>
+
+
+int factorial(int x) {
+    if (x == 0) {
+        return 1;
+    } else {
+        return x * factorial(x - 1);
+    }
+}   
+
+int summation(int x) {
+    if (x == 0) {
+        return 0;
+    } else {
+        return x + summation(x - 1);
+    }
+}
 
 void read_files_and_recurse() {
     char filename[100];
@@ -31,21 +47,7 @@ void read_files_and_recurse() {
     fclose(file);
 }
 
-int factorial(int x) {
-    if (x == 0) {
-        return 1;
-    } else {
-        return x * factorial(x - 1);
-    }
-}   
 
-int summation(int x) {
-    if (x == 0) {
-        return 0;
-    } else {
-        return x + summation(x - 1);
-    }
-}
 
 int main() {
     read_files_and_recurse();
