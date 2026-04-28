@@ -1,6 +1,7 @@
 import requests
 import os
 import streamlit as st
+import bcrypt
 from card_app import stripCard
 def stripCardForSearch(name):
     trimmed = name.strip()
@@ -16,8 +17,26 @@ removed=[]
 added=[]
 menu=""
 lists=[]
+logged_in = False
 
 path = "/workspaces/CardStuffs/decks"
+
+def hash_password(password):
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
+    return hashed
+
+def goodUser(username):
+    with open('users.txt', 'r') as f:
+        users = [line.strip() for line in f]
+    return username in users
+
+def goodPassword(password):
+    with open('passwords.txt', 'r') as f:
+        passwords = [line.strip() for line in f]
+    return password in passwords
+
+
 class Card:
     def __init__(self, name):
         self.name = name
@@ -96,9 +115,10 @@ class Commander(Card):
         self.is_commander = True
         self.image_search_name = stripCard(name)
 
-menu = st.selectbox("Select an option", options=['Please Select an Option', 'Add Cards', 'Remove Cards', 'View Decklists', 'Quit'], key='menu', placeholder="Please Select an Option")
-st.sidebar.title("Images here:")
-if __name__ == "__main__":
+while True:
+    if logged_in:
+        menu = st.selectbox("Select an option", options=['Please Select an Option', 'Add Cards', 'Remove Cards', 'View Decklists', 'Quit'], key='menu', placeholder="Please Select an Option")
+        st.sidebar.title("Images here:")
         if menu == 'Please Select an Option':
             pass
 
@@ -170,6 +190,29 @@ if __name__ == "__main__":
             st.write("Exiting program.")
         else:
             print("Invalid option. Please try again.")
-
+    else:
+        st.title("Welcome to the MTG Deck Manager! Please log in to access your decklists.")
+        st.text_input("Username", key='user_thing')
+        st.text_input("Password", type="password", key='password')
+        col1, col2 = st.columns(2)
+        with col1:
+            create_account = st.button("Create Account")
+        with col2:
+            login= st.button("Log In")
+        if login and goodUser(st.session_state.user_thing) and goodPassword(hash_password(st.session_state.password)):
+            st.success("Logged in successfully!")
+            logged_in = True
+        elif create_account:
+            if st.session_state.user_thing and st.session_state.password:
+                with open('users.txt', 'a') as f:
+                    f.write(f"{st.session_state.user_thing}\n")
+                with open('passwords.txt', 'a') as f:
+                    f.write(f"{hash_password(st.session_state.password)}\n")
+                st.success("Account created successfully!")
+                logged_in = True
+            else:
+                st.error("Please fill in all fields.")
+        else:
+            st.error("Invalid username or password. Please try again or create an account if you don't have one.")
 
 
