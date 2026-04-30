@@ -1,5 +1,6 @@
 import requests
 import os
+import re
 import streamlit as st
 import bcrypt
 from card_app import stripCard
@@ -17,9 +18,12 @@ removed=[]
 added=[]
 menu=""
 lists=[]
-logged_in = False
 
 path = "/workspaces/CardStuffs/decks"
+
+# Initialize session state
+if 'logged_in' not in st.session_state:
+    st.session_state.logged_in = False
 
 def hash_password(password):
     salt = bcrypt.gensalt()
@@ -31,10 +35,29 @@ def goodUser(username):
         users = [line.strip() for line in f]
     return username in users
 
-def goodPassword(password):
-    with open('passwords.txt', 'r') as f:
-        passwords = [line.strip() for line in f]
-    return password in passwords
+def verify_password(password, username):
+    try:
+        users = []
+        with open('users.txt', 'r') as f:
+            users = [line.strip() for line in f]
+        
+        with open('passwords.txt', 'r') as f:
+            passwords = [line.strip() for line in f]
+        
+        if username not in users:
+            return False
+        
+        user_index = users.index(username)
+        stored_hash = passwords[user_index]
+        
+        # Convert the string representation back to bytes
+        stored_hash_bytes = eval(stored_hash)  # Converts b'...' string to bytes
+        
+        # Use bcrypt to verify
+        return bcrypt.checkpw(password.encode('utf-8'), stored_hash_bytes)
+    except Exception as e:
+        print(f"Error verifying password: {e}")
+        return False
 
 
 class Card:
@@ -47,7 +70,7 @@ class Card:
             self.is_basic_land = True
         else:
             self.is_basic_land = False
-
+        self.amount = 1
     def get_image_url(self):
         try:
 
@@ -66,7 +89,7 @@ class Card:
             cmdr_name = stripCard(cmdr_name)
             os.makedirs(f'{path}/{cmdr_name}', exist_ok=True)
             with open(f'{path}/{cmdr_name}/{stripCard(cmdr_name)}_decklist.txt', 'a') as f:
-                f.write(f'{self.name}\n')
+                f.write(f'1, {self.name}\n')
                 print(f'Added {self.name} to {cmdr_name} decklist.')
                 st.write(f'Added {self.name} to {cmdr_name} decklist.')
         except Exception as e:
@@ -115,104 +138,179 @@ class Commander(Card):
         self.is_commander = True
         self.image_search_name = stripCard(name)
 
-while True:
-    if logged_in:
-        menu = st.selectbox("Select an option", options=['Please Select an Option', 'Add Cards', 'Remove Cards', 'View Decklists', 'Quit'], key='menu', placeholder="Please Select an Option")
-        st.sidebar.title("Images here:")
-        if menu == 'Please Select an Option':
-            pass
+# Main app logic
+if st.session_state.logged_in:
+    james = st.selectbox("Select an option", options=['Please Select an Option', 'Add Cards', 'Remove Cards', 'View Decklists', 'Logout'], key='james', placeholder="Please Select an Option")
+    st.sidebar.title("Images here:")
+    
+    if james == 'Please Select an Option':
+        pass
 
-        elif menu == 'Add Cards':
-            st.selectbox("Enter by file or text input", options=['File Upload', 'Text Input'], key='add_input_method', placeholder="Enter by file or text input")
-            if st.session_state.add_input_method == 'Text Input':
-                cmdr_name = st.text_input("Enter the name of the commander: ", key='add_cmdr_name_input')
-                new_cards=st.text_area("Enter card names (one per line): ", key='add_text_area')
-                if cmdr_name and new_cards:
-                    card_names = [line.strip() for line in new_cards.splitlines()]
+    elif james == 'Add Cards':
+        global basics, plains, mountains, swamps, islands, forests, count
+        basics = []
+        plains = 0
+        mountains = 0
+        swamps = 0
+        islands = 0
+        forests = 0
+        count=0
+        st.selectbox("Enter by file or text input", options=['File Upload', 'Text Input'], key='add_input_method', placeholder="Enter by file or text input")
+        if st.session_state.add_input_method == 'Text Input':
+            cmdr_name = st.text_input("Enter the name of the commander: ", key='add_cmdr_name_input')
+            new_cards=st.text_input("Enter card names (one per line): ", key='add_text_area')
+            new_cards = re.split(r'\d+ ', new_cards) 
+            if cmdr_name and new_cards:
+                card_names = [line.strip() for line in new_cards]
+                with st.status(label="Adding cards to decklist...", state="running") as status:
                     for card_name in card_names:
+                        if len(card_name) <= 2:
+                            continue
                         card = Card(card_name)
+                        if card.is_basic_land:
+                            basics.append(card.name)
+                            count+=1
+                            continue
+                        count+=1
                         card.add_to_decklist(cmdr_name)
-            elif st.session_state.add_input_method == 'File Upload':
-                added=st.file_uploader("Enter text file of cards to add: ", key='add_file_uploader')
-                cmdr_name = st.text_input("Enter the name of the commander: ", key='add_cmdr_name_input')
-                if added is not None:
-                    content = added.getvalue().decode('utf-8')
-                    card_names = [line.strip() for line in content.splitlines()]
+                    if basics:
+                        for land in basics:
+                            if land.lower() == 'plains':
+                                plains += 1
+                            elif land.lower() == 'mountain':
+                                mountains += 1
+                            elif land.lower() == 'swamp':
+                                swamps += 1
+                            elif land.lower() == 'island':
+                                islands += 1
+                            elif land.lower() == 'forest':
+                                forests += 1
+                        with open(f'{path}/{stripCard(cmdr_name)}/{stripCard(cmdr_name)}_decklist.txt', 'a') as f:
+                            if plains > 0:
+                                f.write(f'{plains}, Plains\n')
+                            if mountains > 0:
+                                f.write(f'{mountains}, Mountain\n')
+                            if swamps > 0:
+                                f.write(f'{swamps}, Swamp\n')
+                            if islands > 0:
+                                f.write(f'{islands}, Island\n')
+                            if forests > 0:
+                                f.write(f'{forests}, Forest\n')
+                    status.update(label="Finished adding cards!", state="complete")
+        elif st.session_state.add_input_method == 'File Upload':
+            added=st.file_uploader("Enter text file of cards to add: ", key='add_file_uploader')
+            cmdr_name = st.text_input("Enter the name of the commander: ", key='add_cmdr_name_input')
+            if added is not None:
+                content = added.getvalue().decode('utf-8')
+                card_names = [line.strip() for line in content.splitlines()]
+                with st.status(label="Adding cards to decklist...", state="running") as status:
                     for card_name in card_names:
                         card = Card(card_name)
+                        if card.is_basic_land:
+                            basics.append(card.name)
+                            count+=1
+                            continue
+                        card_name = card_name[2:] if len(card_name) > 2 else card_name
                         card.add_to_decklist(cmdr_name)
+                        count+=1
+                    if basics:
+                        for land in basics:
+                            if land.lower() == 'plains':
+                                plains += 1
+                            elif land.lower() == 'mountain':
+                                mountains += 1
+                            elif land.lower() == 'swamp':
+                                swamps += 1
+                            elif land.lower() == 'island':
+                                islands += 1
+                            elif land.lower() == 'forest':
+                                forests += 1
+                        with open(f'{path}/{stripCard(cmdr_name)}/{stripCard(cmdr_name)}_decklist.txt', 'a') as f:
+                            if plains > 0:
+                                f.write(f'{(100-count)/len(basics)}, Plains\n')
+                            if mountains > 0:
+                                f.write(f'{(100-count)/len(basics)}, Mountain\n')
+                            if swamps > 0:
+                                f.write(f'{(100-count)/len(basics)}, Swamp\n')
+                            if islands > 0:
+                                f.write(f'{(100-count)/len(basics)}, Island\n')
+                            if forests > 0:
+                                f.write(f'{(100-count)/len(basics)}, Forest\n')
+                    status.update(label="Finished adding cards!", state="complete")
+                    
+    elif james == 'Remove Cards':
+        st.selectbox("Enter by file or text input", options=['File Upload', 'Text Input'], key='remove_input_method', placeholder="Enter by file or text input")
+        if st.session_state.remove_input_method == 'Text Input':
+            cmdr_name = st.text_input("Enter the name of the commander: ", key='remove_cmdr_name_input')
+            new_cards=st.text_input("Enter card names (one per line): ", key='remove_text_area')
+            if cmdr_name and new_cards:
+                card_names = [line.strip() for line in new_cards.splitlines()]
+                for card_name in card_names:
+                    card = Card(card_name)
+                    card.remove_from_decklist(cmdr_name)
+        elif st.session_state.remove_input_method == 'File Upload':
+            removed=st.file_uploader("Enter text file of cards to remove: ", key='remove_file_uploader')
+            cmdr_name = st.text_input("Enter the name of the commander: ", key='remove_cmdr_name_input')
+            if removed is not None:
+                content = removed.getvalue().decode('utf-8')
+                card_names = [line.strip() for line in content.splitlines()]
+                for card_name in card_names:
+                    card = Card(card_name)
+                    card.remove_from_decklist(cmdr_name)
 
-        elif menu == 'Remove Cards':
-            st.selectbox("Enter by file or text input", options=['File Upload', 'Text Input'], key='remove_input_method', placeholder="Enter by file or text input")
-            if st.session_state.remove_input_method == 'Text Input':
-                cmdr_name = st.text_input("Enter the name of the commander: ", key='remove_cmdr_name_input')
-                new_cards=st.text_area("Enter card names (one per line): ", key='remove_text_area')
-                if cmdr_name and new_cards:
-                    card_names = [line.strip() for line in new_cards.splitlines()]
-                    for card_name in card_names:
-                        card = Card(card_name)
-                        card.remove_from_decklist(cmdr_name)
-            elif st.session_state.remove_input_method == 'File Upload':
-                removed=st.file_uploader("Enter text file of cards to remove: ", key='remove_file_uploader')
-                cmdr_name = st.text_input("Enter the name of the commander: ", key='remove_cmdr_name_input')
-                if removed is not None:
-                    content = removed.getvalue().decode('utf-8')
-                    card_names = [line.strip() for line in content.splitlines()]
-                    for card_name in card_names:
-                        card = Card(card_name)
-                        card.remove_from_decklist(cmdr_name)
+    elif james == 'View Decklists':
+        lists = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
+        cmdr_name = st.selectbox("Select a commander:", options=lists)
+        if cmdr_name:
+            deck_path = f'{path}/{cmdr_name}/{stripCard(cmdr_name)}_decklist.txt'
+            if os.path.exists(deck_path):
+                with open(deck_path, 'r') as f:
+                    cards = [line.strip() for line in f if line.strip()]
 
-        elif menu == 'View Decklists':
-            lists = [d for d in os.listdir(path) if os.path.isdir(os.path.join(path, d))]
-            cmdr_name = st.selectbox("Select a commander:", options=lists)
-            if cmdr_name:
-                deck_path = f'{path}/{cmdr_name}/{stripCard(cmdr_name)}_decklist.txt'
-                if os.path.exists(deck_path):
-                    with open(deck_path, 'r') as f:
-                        cards = [line.strip() for line in f if line.strip()]
+                    if not cards:
+                        st.info(f"{cmdr_name}'s decklist is currently empty.")
+                    else:
+                        selected_card = st.selectbox("Select a card to view", options=cards)
+                        st.text_area(f"{cmdr_name}'s Decklist", value="\n".join(cards), height=300, key='display_area')
+                        
 
-                        if not cards:
-                            st.info(f"{cmdr_name}'s decklist is currently empty.")
-                        else:
-                            selected_card = st.selectbox("Select a card to view", options=cards)
-                            st.text_area(f"{cmdr_name}'s Decklist", value="\n".join(cards), height=300, key='display_area')
-                            cmdr_name = Commander(cmdr_name)
-                            cmdr_name.show_image()
-
-                            if selected_card:
-                                card = Card(selected_card)
-                                card.show_image()
-                else:
-                    st.error(f"No decklist found for {cmdr_name}.")
-
-        elif menu == 'Quit':
-            print("Exiting program.")
-            st.write("Exiting program.")
-        else:
-            print("Invalid option. Please try again.")
-    else:
-        st.title("Welcome to the MTG Deck Manager! Please log in to access your decklists.")
-        st.text_input("Username", key='user_thing')
-        st.text_input("Password", type="password", key='password')
-        col1, col2 = st.columns(2)
-        with col1:
-            create_account = st.button("Create Account")
-        with col2:
-            login= st.button("Log In")
-        if login and goodUser(st.session_state.user_thing) and goodPassword(hash_password(st.session_state.password)):
-            st.success("Logged in successfully!")
-            logged_in = True
-        elif create_account:
-            if st.session_state.user_thing and st.session_state.password:
-                with open('users.txt', 'a') as f:
-                    f.write(f"{st.session_state.user_thing}\n")
-                with open('passwords.txt', 'a') as f:
-                    f.write(f"{hash_password(st.session_state.password)}\n")
-                st.success("Account created successfully!")
-                logged_in = True
+                        if selected_card:
+                            card = Card(selected_card)
+                            card.show_image()
             else:
-                st.error("Please fill in all fields.")
+                st.error(f"No decklist found for {cmdr_name}.")
+
+    elif james == 'Logout':
+        st.session_state.logged_in = False
+        st.rerun()
+
+else:
+    st.title("Welcome to the MTG Deck Manager! Please log in to access your decklists.")
+    st.text_input("Username", key='login_username')
+    st.text_input("Password", type="password", key='login_password')
+    col1, col2 = st.columns(2)
+    with col1:
+        create_account = st.button("Create Account", key='create_btn')
+    with col2:
+        login= st.button("Log In", key='login_btn')
+    
+    if login and goodUser(st.session_state.login_username) and verify_password(st.session_state.login_password, st.session_state.login_username):
+        st.success("Logged in successfully!")
+        st.session_state.logged_in = True
+        st.rerun()
+    elif create_account:
+        if st.session_state.login_username and st.session_state.login_password:
+            with open('users.txt', 'a') as f:
+                f.write(f"{st.session_state.login_username}\n")
+            with open('passwords.txt', 'a') as f:
+                hashed = bcrypt.hashpw(st.session_state.login_password.encode('utf-8'), bcrypt.gensalt())
+                f.write(f"{hashed}\n")
+            st.success("Account created successfully!")
+            st.session_state.logged_in = True
+            st.rerun()
         else:
-            st.error("Invalid username or password. Please try again or create an account if you don't have one.")
+            st.error("Please fill in all fields.")
+    elif login or create_account:
+        st.error("Invalid username or password. Please try again or create an account if you don't have one.")
 
 
