@@ -1,22 +1,33 @@
 #!usr/bin/perl
 use strict;
 use warnings;
+use Socket;
 use Time::HiRes qw(time);
 use POSIX qw(strftime);
-
-use Tk;
+use Cwd;
 use LWP::Simple;
 use LWP::UserAgent;
-use Tk::JPEG;
 use Text::CSV;
-use open qw(:std :encoding(UTF-8)); 
-require Tk::HList;
-require Tk::ROText;
+use open qw(:std :encoding(UTF-8));
 
-open(DBG,">debug.txt");
+my $run_ui = 1;
+if (defined($ARGV[0]) && $ARGV[0] eq '0') {
+    $run_ui = 0;
+}
 
-my $pwd = `cd`;
+if ($run_ui) {
+    require Tk;
+    Tk->import();
+    require Tk::JPEG;
+    require Tk::HList;
+    require Tk::ROText;
+}
+
+my $pwd = getcwd();
 chomp($pwd);
+
+# Change to the AllPrintingsCSVFiles directory where the CSV files are located
+chdir('AllPrintingsCSVFiles') or die "Can't change to AllPrintingsCSVFiles: $!\n";
 
 ## to pull in new cards :  goto : https://mtgjson.com/downloads/all-files/#allprintings
 ## download AllPrintingsCSVFiles
@@ -145,7 +156,6 @@ my @THE_SETS;
 my $setcode_i;
 my $setname_i;
 
-
 my @PRICES;
 my $price_uuid_i;
 my $price_price_i;
@@ -156,17 +166,12 @@ my $price_listing_i;
 my %PRICE_HASH;
 my @CHEAPEST_LIST;
 
-
-
-
 my %LEGAL_HASH;
 my $not_hashed = 1;
 my @LEGALS;
 my $uuid_leg_i;
 my $selected_legality_i;
 my $last_legal_set = "";
-
-
 
 my @RULINGS;
 my $ruling_uuid_i;
@@ -176,349 +181,336 @@ my @CARD_IDS;
 my $card_id_uuid_i;
 my $card_id_scryfallId_i;
 
-
-
-my $mw = new MainWindow;
-$mw->setPalette('#444444');  ##"#FFDEAD");
-$mw->configure(-title=>'MTG!');
-my $mbar = $mw->Menu();
-$mw->configure(-menu => $mbar);
-
-my $file = $mbar -> cascade(-label=>"File", -underline=>0, -tearoff => 0);
-$file->checkbutton(-label =>"Open",-command => [\&commands, "Open"]);
-$file -> command(-label =>"Save",-command => [\&commands, "Save"]);
-
-my @ENTRIES;
-my @FIELDS;
-my @ENABLES;
-
 my @COLORS=("White","Blue","Green","Red","Black");
 my @COLOR_M=("W","U","G","R","B");
 my @TYPES = ("Artifact","Battle","Creature","Enchantment","Instant","Land","legendary","Planeswalker","Sorcery","kindred");
-for my $z (0..$#TYPES){
-   $ALLOWED_TYPES[$z]=0;
-   $NOT_ALLOWED_TYPES[$z]=0;
-}
-
-
-my $label;
-my $entry;
-my $spacer;
-
-my $top_frame     =$mw->Frame()->pack(-side=>'top');
-my $bottom_frame  =$mw->Frame()->pack(-side=>'top');
-my $bottom_frame2 =$mw->Frame(-borderwidth=>2,-relief=>'ridge')->pack(-side=>'top');
-
-
-
-my $left_frame   = $top_frame->Frame()->pack(-side=>'left');
-my $right_frame  = $top_frame->Frame()->pack(-side=>'left');
-my $right_frameB = $top_frame->Frame()->pack(-side=>'left');
-
-my $right_frame2 = $top_frame->Frame()->pack(-side=>'left');
-my $right_frame3 = $top_frame->Frame()->pack(-side=>'left');
-
-#############################################################################################
-## legal sets;
-
-my $frame      = $left_frame->Frame()->pack(-side=>'top');
-
 my @LEGAL_CHOICES = qw(dont_care alchemy brawl commander duel future gladiator 
                        historic legacy modern oathbreaker oldschool 
                        pauper paupercommander penny pioneer predh 
                        premodern standard standardbrawl timeless vintage);
-my $legal_lble = $frame->Label(-text=>"Format",-width=>6)->pack(-side=>'left');                       
-my $legalities = $frame->Optionmenu(-options=>\@LEGAL_CHOICES,-textvariable=>\$legality_selected,-width=>42)->pack(-side=>'left');
-&splitter();
-
-#############################################################################################
-## name   
-   $frame      = $left_frame->Frame()->pack(-side=>'top');
-my $name       = $frame->Label(-text=>"Name",-width=>6)->pack(-side=>'left');
-my $name_entry = $frame->Entry(-textvariable=>\$name_filter,-width=>49)->pack(-side=>'left');
-
-#############################################################################################
-## set
-$frame          = $left_frame->Frame()->pack(-side=>'top');
-my $set         = $frame->Label(-text=>"Set",-width=>6)->pack(-side=>'left');
-my $set_entry   = $frame->Entry(-textvariable=>\$set_filter,-width=>49)->pack(-side=>'left');
-
-#############################################################################################
-## dups
-$frame      = $left_frame->Frame()->pack(-side=>'top');
-my $dups = $frame->Checkbutton(-text=>"No dups",-variable=>\$eliminate_dups)->pack(-anchor => 'w',-side=>'left');
-
-my $lang = $frame->Checkbutton(-text=>"Eng Only",-variable=>\$english)->pack(-anchor => 'w',-side=>'left');
-
-
-my $specs   = $frame->Checkbutton(-text=>"S",-variable=>\$special)->pack(-anchor => 'w',-side=>'left');
-my $mythics = $frame->Checkbutton(-text=>"M",-variable=>\$mythic)->pack(-anchor => 'w',-side=>'left');
-my $rares = $frame->Checkbutton(-text=>"R",-variable=>\$rare)->pack(-anchor => 'w',-side=>'left');
-my $uncommons = $frame->Checkbutton(-text=>"U",-variable=>\$uncommon)->pack(-anchor => 'w',-side=>'left');
-my $commons = $frame->Checkbutton(-text=>"C",-variable=>\$common)->pack(-anchor => 'w',-side=>'left');
-
-&splitter();
-
-#############################################################################################
-## color  (must have)
-
-$frame      = $left_frame->Frame()->pack(-side=>'top');
-$label = $frame->Label(-text=>"Must BE       :")->pack(-side=>'left');
-for my $i (0..$#COLORS){
-   my $name = $COLORS[$i];
-   my $f1 = $frame->Checkbutton(-text=>$name,-variable=>\$MUST_HAVE[$i])->pack(-anchor => 'w',-side=>'left');
-   $MUST_HAVE[$i]=0;
-} 
-my $space = $frame->Label(-text=>":",-width=>1)->pack(-side=>'left');
-
-
-#############################################################################################
-## color  (allowed to have)
-
-$frame      = $left_frame->Frame()->pack(-side=>'top');
-$label = $frame->Label(-text=>"Allowed to be:")->pack(-side=>'left');
-
-for my $i (0..$#COLORS){
-   my $name = $COLORS[$i];
-   my $f1 = $frame->Checkbutton(-text=>$name,-variable=>\$ALLOWED_HAVE[$i])->pack(-anchor => 'w',-side=>'left');
-   $ALLOWED_HAVE[$i]=0;
-} 
-$space = $frame->Label(-text=>":",-width=>1)->pack(-side=>'left');
-
-#############################################################################################
-## color  (CANT have)
-
-$frame      = $left_frame->Frame()->pack(-side=>'top');
-$label = $frame->Label(-text=>"Not Allowed: ")->pack(-side=>'left');
-
-for my $i (0..$#COLORS){
-   my $name = $COLORS[$i];
-   my $f1 = $frame->Checkbutton(-text=>$name,-variable=>\$NOT_ALLOWED_HAVE[$i])->pack(-anchor => 'w',-side=>'left');
-   $NOT_ALLOWED_HAVE[$i]=0;
-} 
-$space = $frame->Label(-text=>":",-width=>1)->pack(-side=>'left');
-
-&splitter();
-
-#############################################################################################
-$frame = $left_frame->Frame()->pack(-side=>'top');
-$label = $frame->Label(-text=>"Power:")->pack(-side=>'left');
-$entry = $frame->Entry(-textvariable=>\$low_power,-width=>5)->pack(-side=>'left');
-$name  = $frame->Label(-text=>"to:")->pack(-side=>'left');
-$entry = $frame->Entry(-textvariable=>\$high_power,-width=>5)->pack(-side=>'left');
-
-#############################################################################################
-$label = $frame->Label(-text=>"Toughness:")->pack(-side=>'left');
-$entry = $frame->Entry(-textvariable=>\$low_toughness,-width=>5)->pack(-side=>'left');
-$name  = $frame->Label(-text=>"to")->pack(-side=>'left');
-$entry = $frame->Entry(-textvariable=>\$high_toughness,-width=>5)->pack(-side=>'left');
-$space = $frame->Label(-text=>":",-width=>10)->pack(-side=>'left');
-&splitter();
-
-
-#############################################################################################
-## cost
-$frame  = $left_frame->Frame()->pack(-side=>'top');
-$label  = $frame->Label(-text=>"Converted mana cost:  ")->pack(-side=>'left');
-$entry  = $frame->Entry(-textvariable=>\$low,-width=>5)->pack(-side=>'left');
-$label  = $frame->Label(-text=>" to ")->pack(-side=>'left');
-$entry  = $frame->Entry(-textvariable=>\$high,-width=>5)->pack(-side=>'left');
-$space  = $frame->Label(-text=>"       ",-width=>18)->pack(-side=>'left');
-&splitter();
-
-#############################################################################################
-## sub types  /  super types;
-
-$frame = $left_frame->Frame()->pack(-side=>'top');
-$label  = $frame->Label(-text=>"subtype:")->pack(-side=>'left');
-$entry  = $frame->Entry(-textvariable=>\$subtype,-width=>10)->pack(-side=>'left');
-
-$label  = $frame->Label(-text=>"super type:")->pack(-side=>'left');
-$entry  = $frame->Entry(-textvariable=>\$super_type,-width=>10)->pack(-side=>'left');
-$space  = $frame->Label(-text=>"       ",-width=>10)->pack(-side=>'left');
-
-&splitter();
-#############################################################################################
-
-   $frame  = $left_frame->Frame()->pack(-side=>'top');
-my $frame1 = $left_frame->Frame()->pack(-side=>'top');
-my $frame2 = $left_frame->Frame()->pack(-side=>'top');
-
-$label  = $frame->Label(-text=>"-----allowed types------")->pack(-side=>'left');
-for my $i (0..$#TYPES){
-   my $name = $TYPES[$i];
-   if($i < 5){
-      my $f1 = $frame1->Checkbutton(-text=>$name,-variable=>\$ALLOWED_TYPES[$i])->pack(-anchor => 'w',-side=>'left');
-   } else {
-      my $f1 = $frame2->Checkbutton(-text=>$name,-variable=>\$ALLOWED_TYPES[$i])->pack(-anchor => 'w',-side=>'left');
-   }
-}
-&splitter();
-#############################################################################################
-
-$frame  = $left_frame->Frame()->pack(-side=>'top');
-$frame1 = $left_frame->Frame()->pack(-side=>'top');
-$frame2 = $left_frame->Frame()->pack(-side=>'top');
-
-$label  = $frame->Label(-text=>"-----NOT allowed types------")->pack(-side=>'left');
-for my $i (0..$#TYPES){
-   my $name = $TYPES[$i];
-   if($i < 5){
-      my $f1 = $frame1->Checkbutton(-text=>$name,-variable=>\$NOT_ALLOWED_TYPES[$i])->pack(-anchor => 'w',-side=>'left');
-   } else {
-      my $f1 = $frame2->Checkbutton(-text=>$name,-variable=>\$NOT_ALLOWED_TYPES[$i])->pack(-anchor => 'w',-side=>'left');
-   }
-} 
-&splitter();
-#############################################################################################
-## text
-
-$frame  = $left_frame->Frame()->pack(-side=>'top');
-$frame1 = $left_frame->Frame()->pack(-side=>'top');
-$frame2 = $left_frame->Frame()->pack(-side=>'top');
-
-$label  = $frame->Label(-text=>"TEXT ANDS:")->pack(-side=>'left');
-$entry  = $frame1->Entry(-textvariable=>\$text1,-width=>10)->pack(-side=>'left');
-$entry  = $frame1->Entry(-textvariable=>\$text2,-width=>10)->pack(-side=>'left');
-$entry  = $frame1->Entry(-textvariable=>\$text3,-width=>10)->pack(-side=>'left');
-$entry  = $frame1->Entry(-textvariable=>\$text4,-width=>10)->pack(-side=>'left');
-
-$entry  = $frame2->Entry(-textvariable=>\$text5,-width=>10)->pack(-side=>'left');
-$entry  = $frame2->Entry(-textvariable=>\$text6,-width=>10)->pack(-side=>'left');
-$entry  = $frame2->Entry(-textvariable=>\$text7,-width=>10)->pack(-side=>'left');
-$entry  = $frame2->Entry(-textvariable=>\$text8,-width=>10)->pack(-side=>'left');
-&splitter();
-
-#############################################################################################
-## or text
-
-
-$frame  = $left_frame->Frame()->pack(-side=>'top');
-$label  = $frame->Label(-text=>"TEXT ORS:")->pack(-side=>'left');
-$frame  = $left_frame->Frame()->pack(-side=>'top');
-
-$entry  = $frame->Entry(-textvariable=>\$OR_TEXT[0],-width=>10)->pack(-side=>'left');
-$entry  = $frame->Entry(-textvariable=>\$OR_TEXT[1],-width=>10)->pack(-side=>'left');
-$entry  = $frame->Entry(-textvariable=>\$OR_TEXT[2],-width=>10)->pack(-side=>'left');
-$entry  = $frame->Entry(-textvariable=>\$OR_TEXT[3],-width=>10)->pack(-side=>'left');
-$OR_TEXT[0]="";
-$OR_TEXT[1]="";
-$OR_TEXT[2]="";
-$OR_TEXT[3]="";
-
-#############################################################################################
-## not text
-
-$frame  = $left_frame->Frame()->pack(-side=>'top');
-$frame1 = $left_frame->Frame()->pack(-side=>'top');
-$frame2 = $left_frame->Frame()->pack(-side=>'top');
-
-$label  = $frame->Label(-text=>"TEXT NOTS:")->pack(-side=>'left');
-$entry  = $frame1->Entry(-textvariable=>\$ntext1,-width=>10)->pack(-side=>'left');
-$entry  = $frame1->Entry(-textvariable=>\$ntext2,-width=>10)->pack(-side=>'left');
-$entry  = $frame1->Entry(-textvariable=>\$ntext3,-width=>10)->pack(-side=>'left');
-$entry  = $frame1->Entry(-textvariable=>\$ntext4,-width=>10)->pack(-side=>'left');
-
-
-#############################################################################################
-## sort by; 
-$frame  = $left_frame->Frame()->pack(-side=>'top');
-
-for my $i (0..$#SORT_BY){
-   my $name = $SORT_BY[$i];
-   my $f1 = $frame->Radiobutton(-text=>$name,-value=>$name,-variable=>\$sort_by)->pack(-anchor => 'w',-side=>'left');
-} 
-
-#############################################################################################
-
+                       
 my @MAP;
-my $scrollbar   = $right_frame->Scrollbar( );
-my $hlist       = $right_frame->HList(-height=>28,-width=>44,-browsecmd=>\&hlist_select_call,-selectmode => "single",-yscrollcommand => ['set' => $scrollbar],-font=>'courier 10',)->pack(-side=>'left');
-$scrollbar->configure(-command => ['yview' => $hlist]);
-$scrollbar->pack(-side => 'right', -fill => 'y');
-$hlist->pack(-side => 'left', -fill => 'both');
-
-#############################################################################################
-
 my @WORKING;
 my @MAP2;
-my $scrollbar2   = $right_frameB->Scrollbar( );
-my $hlist2       = $right_frameB->HList(-height=>28,-width=>40,-browsecmd=>\&hlist2_select_call,-selectmode => "single",-yscrollcommand => ['set' => $scrollbar2],-font=>'courier 10',)->pack(-side=>'left');
-$scrollbar2->configure(-command => ['yview' => $hlist2]);
-$scrollbar2->pack(-side => 'right', -fill => 'y');
-$hlist2->pack(-side => 'left', -fill => 'both');
-
-#############################################################################################
-my $text_panel;
-if($display_text_box){
-    $right_frame2->ROText(
-            -height=>28,
-            -width=>40,
-            -font=>'courier 10',
-            )->pack(-side=>'top');
-}
-##################################################################################
-
-my $search;
 my $status = "Not ready";
 my $search_found = "";
-
 my $jank_edh_rank = 15000;
+my $note_width_in_chars = 205;
 
-my $next_frame=$left_frame->Frame()->pack(-side=>'top');
-$next_frame=$next_frame->Frame()->pack(-side=>'top');
-my $button=$next_frame->Button(-text=>"Search",-command=>[\&commands, "search"],-width=>24)->pack(-side=>'left');
-   $button=$next_frame->Button(-text=>"Clear",-command=>[\&commands, "Clear"],-width=>24)->pack(-side=>'left');
-
-$next_frame=$left_frame->Frame()->pack(-side=>'top');
-
-   $button=$next_frame->Button(-text=>"Random",-command=>[\&commands, "random"])->pack(-side=>'left');
-   $button=$next_frame->Button(-text=>"Jank",-command=>[\&commands, "random jank"])->pack(-side=>'left');
-   $button=$next_frame->Button(-text=>"Neighbors",-command=>[\&commands, "find_sim"])->pack(-side=>'left');
-   $button=$next_frame->Button(-text=>"Add",-command=>[\&commands, "add to list"])->pack(-side=>'left');
-   $button=$next_frame->Button(-text=>"Remove",-command=>[\&commands, "remove to list"])->pack(-side=>'left');
-   $button=$next_frame->Button(-text=>"download",-command=>[\&commands, "download"])->pack(-side=>'left');
-   $button=$next_frame->Button(-text=>"Write",-command=>[\&commands, "write out search"])->pack(-side=>'left');
-      
-
-my $image_lbl = $right_frame3->Label()->pack(-side=>'top');
-my $flip_button = $right_frame3->Button(-text=>'flip',-command=>[\&commands, "flip"],-width=>25)->pack(-side=>'left');
-my $rotate_right = $right_frame3->Button(-text=>'Rot right',-command=>[\&commands, "right_turn"],-width=>25)->pack(-side=>'left');
-
-
-my $note_width=205;
-my $note_width_in_chars = 205; #300;
+my $mw;
+my $hlist;
+my $hlist2;
+my $text_panel;
 my $notes1;
 my $notes2;
 my $notes3;
+my $rulings;
+my $image_lbl;
 
-my $stat   = $bottom_frame->Label(-textvariable=>\$status)->pack(-side=>'left');
-my $notesa = $bottom_frame->Label(-textvariable=>\$notes1,-width=>40)->pack(-side=>'left');
-my $notesb = $bottom_frame->Label(-textvariable=>\$notes2,-width=>40)->pack(-side=>'left');
-my $notesc = $bottom_frame->Label(-textvariable=>\$notes3)->pack(-side=>'left');
+if(!$run_ui){
+  &init();
+  &get_socket_running();
 
-my $scrollbar_rules   = $bottom_frame2->Scrollbar( );
-my $rulings = $bottom_frame2->ROText(
-            -height=>10,
-            -width=>205,
-            -font=>'courier 8',
-            -yscrollcommand => [set => $scrollbar_rules])->pack(-side=>'top');
+} else {
+   $mw = new MainWindow;
+   $mw->setPalette('#444444');  ##"#FFDEAD");
+   $mw->configure(-title=>'MTG!');
+   my $mbar = $mw->Menu();
+   $mw->configure(-menu => $mbar);
+
+   my $file = $mbar -> cascade(-label=>"File", -underline=>0, -tearoff => 0);
+   $file->checkbutton(-label =>"Open",-command => [\&commands, "Open"]);
+   $file -> command(-label =>"Save",-command => [\&commands, "Save"]);
+
+   for my $z (0..$#TYPES){
+      $ALLOWED_TYPES[$z]=0;
+      $NOT_ALLOWED_TYPES[$z]=0;
+   }
+
+   my $label;
+   my $entry;
+   my $spacer;
+
+   my $top_frame     =$mw->Frame()->pack(-side=>'top');
+   my $bottom_frame  =$mw->Frame()->pack(-side=>'top');
+   my $bottom_frame2 =$mw->Frame(-borderwidth=>2,-relief=>'ridge')->pack(-side=>'top');
+
+   my $left_frame   = $top_frame->Frame()->pack(-side=>'left');
+   my $right_frame  = $top_frame->Frame()->pack(-side=>'left');
+   my $right_frameB = $top_frame->Frame()->pack(-side=>'left');
+
+   my $right_frame2 = $top_frame->Frame()->pack(-side=>'left');
+   my $right_frame3 = $top_frame->Frame()->pack(-side=>'left');
+
+   #############################################################################################
+   ## legal sets;
+
+   my $frame      = $left_frame->Frame()->pack(-side=>'top');
+
+   my $legal_lble = $frame->Label(-text=>"Format",-width=>6)->pack(-side=>'left');                       
+   my $legalities = $frame->Optionmenu(-options=>\@LEGAL_CHOICES,-textvariable=>\$legality_selected,-width=>42)->pack(-side=>'left');
+   &splitter();
+
+   #############################################################################################
+   ## name   
+      $frame      = $left_frame->Frame()->pack(-side=>'top');
+   my $name       = $frame->Label(-text=>"Name",-width=>6)->pack(-side=>'left');
+   my $name_entry = $frame->Entry(-textvariable=>\$name_filter,-width=>49)->pack(-side=>'left');
+
+   #############################################################################################
+   ## set
+   $frame          = $left_frame->Frame()->pack(-side=>'top');
+   my $set         = $frame->Label(-text=>"Set",-width=>6)->pack(-side=>'left');
+   my $set_entry   = $frame->Entry(-textvariable=>\$set_filter,-width=>49)->pack(-side=>'left');
+
+   #############################################################################################
+   ## dups
+   $frame      = $left_frame->Frame()->pack(-side=>'top');
+   my $dups = $frame->Checkbutton(-text=>"No dups",-variable=>\$eliminate_dups)->pack(-anchor => 'w',-side=>'left');
+   my $lang = $frame->Checkbutton(-text=>"Eng Only",-variable=>\$english)->pack(-anchor => 'w',-side=>'left');
+   my $specs   = $frame->Checkbutton(-text=>"S",-variable=>\$special)->pack(-anchor => 'w',-side=>'left');
+   my $mythics = $frame->Checkbutton(-text=>"M",-variable=>\$mythic)->pack(-anchor => 'w',-side=>'left');
+   my $rares = $frame->Checkbutton(-text=>"R",-variable=>\$rare)->pack(-anchor => 'w',-side=>'left');
+   my $uncommons = $frame->Checkbutton(-text=>"U",-variable=>\$uncommon)->pack(-anchor => 'w',-side=>'left');
+   my $commons = $frame->Checkbutton(-text=>"C",-variable=>\$common)->pack(-anchor => 'w',-side=>'left');
+
+   &splitter();
+
+   #############################################################################################
+   ## color  (must have)
+
+   $frame      = $left_frame->Frame()->pack(-side=>'top');
+   $label = $frame->Label(-text=>"Must BE       :")->pack(-side=>'left');
+   for my $i (0..$#COLORS){
+      my $name = $COLORS[$i];
+      my $f1 = $frame->Checkbutton(-text=>$name,-variable=>\$MUST_HAVE[$i])->pack(-anchor => 'w',-side=>'left');
+      $MUST_HAVE[$i]=0;
+   } 
+   my $space = $frame->Label(-text=>":",-width=>1)->pack(-side=>'left');
+
+
+   #############################################################################################
+   ## color  (allowed to have)
+
+   $frame      = $left_frame->Frame()->pack(-side=>'top');
+   $label = $frame->Label(-text=>"Allowed to be:")->pack(-side=>'left');
+
+   for my $i (0..$#COLORS){
+      my $name = $COLORS[$i];
+      my $f1 = $frame->Checkbutton(-text=>$name,-variable=>\$ALLOWED_HAVE[$i])->pack(-anchor => 'w',-side=>'left');
+      $ALLOWED_HAVE[$i]=0;
+   } 
+   $space = $frame->Label(-text=>":",-width=>1)->pack(-side=>'left');
+
+   #############################################################################################
+   ## color  (CANT have)
+
+   $frame      = $left_frame->Frame()->pack(-side=>'top');
+   $label = $frame->Label(-text=>"Not Allowed: ")->pack(-side=>'left');
+
+   for my $i (0..$#COLORS){
+      my $name = $COLORS[$i];
+      my $f1 = $frame->Checkbutton(-text=>$name,-variable=>\$NOT_ALLOWED_HAVE[$i])->pack(-anchor => 'w',-side=>'left');
+      $NOT_ALLOWED_HAVE[$i]=0;
+   } 
+   $space = $frame->Label(-text=>":",-width=>1)->pack(-side=>'left');
+
+   &splitter();
+
+   #############################################################################################
+   $frame = $left_frame->Frame()->pack(-side=>'top');
+   $label = $frame->Label(-text=>"Power:")->pack(-side=>'left');
+   $entry = $frame->Entry(-textvariable=>\$low_power,-width=>5)->pack(-side=>'left');
+   $name  = $frame->Label(-text=>"to:")->pack(-side=>'left');
+   $entry = $frame->Entry(-textvariable=>\$high_power,-width=>5)->pack(-side=>'left');
+
+   #############################################################################################
+   $label = $frame->Label(-text=>"Toughness:")->pack(-side=>'left');
+   $entry = $frame->Entry(-textvariable=>\$low_toughness,-width=>5)->pack(-side=>'left');
+   $name  = $frame->Label(-text=>"to")->pack(-side=>'left');
+   $entry = $frame->Entry(-textvariable=>\$high_toughness,-width=>5)->pack(-side=>'left');
+   $space = $frame->Label(-text=>":",-width=>10)->pack(-side=>'left');
+   &splitter();
+
+   #############################################################################################
+   ## cost
+   $frame  = $left_frame->Frame()->pack(-side=>'top');
+   $label  = $frame->Label(-text=>"Converted mana cost:  ")->pack(-side=>'left');
+   $entry  = $frame->Entry(-textvariable=>\$low,-width=>5)->pack(-side=>'left');
+   $label  = $frame->Label(-text=>" to ")->pack(-side=>'left');
+   $entry  = $frame->Entry(-textvariable=>\$high,-width=>5)->pack(-side=>'left');
+   $space  = $frame->Label(-text=>"       ",-width=>18)->pack(-side=>'left');
+   &splitter();
+
+   #############################################################################################
+   ## sub types  /  super types;
+
+   $frame = $left_frame->Frame()->pack(-side=>'top');
+   $label  = $frame->Label(-text=>"subtype:")->pack(-side=>'left');
+   $entry  = $frame->Entry(-textvariable=>\$subtype,-width=>10)->pack(-side=>'left');
+
+   $label  = $frame->Label(-text=>"super type:")->pack(-side=>'left');
+   $entry  = $frame->Entry(-textvariable=>\$super_type,-width=>10)->pack(-side=>'left');
+   $space  = $frame->Label(-text=>"       ",-width=>10)->pack(-side=>'left');
+
+   &splitter();
+   #############################################################################################
+
+      $frame  = $left_frame->Frame()->pack(-side=>'top');
+   my $frame1 = $left_frame->Frame()->pack(-side=>'top');
+   my $frame2 = $left_frame->Frame()->pack(-side=>'top');
+
+   $label  = $frame->Label(-text=>"-----allowed types------")->pack(-side=>'left');
+   for my $i (0..$#TYPES){
+      my $name = $TYPES[$i];
+      if($i < 5){
+         my $f1 = $frame1->Checkbutton(-text=>$name,-variable=>\$ALLOWED_TYPES[$i])->pack(-anchor => 'w',-side=>'left');
+      } else {
+         my $f1 = $frame2->Checkbutton(-text=>$name,-variable=>\$ALLOWED_TYPES[$i])->pack(-anchor => 'w',-side=>'left');
+      }
+   }
+   &splitter();
+   #############################################################################################
+
+   $frame  = $left_frame->Frame()->pack(-side=>'top');
+   $frame1 = $left_frame->Frame()->pack(-side=>'top');
+   $frame2 = $left_frame->Frame()->pack(-side=>'top');
+
+   $label  = $frame->Label(-text=>"-----NOT allowed types------")->pack(-side=>'left');
+   for my $i (0..$#TYPES){
+      my $name = $TYPES[$i];
+      if($i < 5){
+         my $f1 = $frame1->Checkbutton(-text=>$name,-variable=>\$NOT_ALLOWED_TYPES[$i])->pack(-anchor => 'w',-side=>'left');
+      } else {
+         my $f1 = $frame2->Checkbutton(-text=>$name,-variable=>\$NOT_ALLOWED_TYPES[$i])->pack(-anchor => 'w',-side=>'left');
+      }
+   } 
+   &splitter();
+   #############################################################################################
+   ## text
+
+   $frame  = $left_frame->Frame()->pack(-side=>'top');
+   $frame1 = $left_frame->Frame()->pack(-side=>'top');
+   $frame2 = $left_frame->Frame()->pack(-side=>'top');
+
+   $label  = $frame->Label(-text=>"TEXT ANDS:")->pack(-side=>'left');
+   $entry  = $frame1->Entry(-textvariable=>\$text1,-width=>10)->pack(-side=>'left');
+   $entry  = $frame1->Entry(-textvariable=>\$text2,-width=>10)->pack(-side=>'left');
+   $entry  = $frame1->Entry(-textvariable=>\$text3,-width=>10)->pack(-side=>'left');
+   $entry  = $frame1->Entry(-textvariable=>\$text4,-width=>10)->pack(-side=>'left');
+
+   $entry  = $frame2->Entry(-textvariable=>\$text5,-width=>10)->pack(-side=>'left');
+   $entry  = $frame2->Entry(-textvariable=>\$text6,-width=>10)->pack(-side=>'left');
+   $entry  = $frame2->Entry(-textvariable=>\$text7,-width=>10)->pack(-side=>'left');
+   $entry  = $frame2->Entry(-textvariable=>\$text8,-width=>10)->pack(-side=>'left');
+   &splitter();
+
+   #############################################################################################
+   ## or text
+   $frame  = $left_frame->Frame()->pack(-side=>'top');
+   $label  = $frame->Label(-text=>"TEXT ORS:")->pack(-side=>'left');
+   $frame  = $left_frame->Frame()->pack(-side=>'top');
+
+   $entry  = $frame->Entry(-textvariable=>\$OR_TEXT[0],-width=>10)->pack(-side=>'left');
+   $entry  = $frame->Entry(-textvariable=>\$OR_TEXT[1],-width=>10)->pack(-side=>'left');
+   $entry  = $frame->Entry(-textvariable=>\$OR_TEXT[2],-width=>10)->pack(-side=>'left');
+   $entry  = $frame->Entry(-textvariable=>\$OR_TEXT[3],-width=>10)->pack(-side=>'left');
+   $OR_TEXT[0]="";
+   $OR_TEXT[1]="";
+   $OR_TEXT[2]="";
+   $OR_TEXT[3]="";
+
+   #############################################################################################
+   ## not text
+
+   $frame  = $left_frame->Frame()->pack(-side=>'top');
+   $frame1 = $left_frame->Frame()->pack(-side=>'top');
+   $frame2 = $left_frame->Frame()->pack(-side=>'top');
+
+   $label  = $frame->Label(-text=>"TEXT NOTS:")->pack(-side=>'left');
+   $entry  = $frame1->Entry(-textvariable=>\$ntext1,-width=>10)->pack(-side=>'left');
+   $entry  = $frame1->Entry(-textvariable=>\$ntext2,-width=>10)->pack(-side=>'left');
+   $entry  = $frame1->Entry(-textvariable=>\$ntext3,-width=>10)->pack(-side=>'left');
+   $entry  = $frame1->Entry(-textvariable=>\$ntext4,-width=>10)->pack(-side=>'left');
+
+   #############################################################################################
+   ## sort by; 
+   $frame  = $left_frame->Frame()->pack(-side=>'top');
+
+   for my $i (0..$#SORT_BY){
+      my $name = $SORT_BY[$i];
+      my $f1 = $frame->Radiobutton(-text=>$name,-value=>$name,-variable=>\$sort_by)->pack(-anchor => 'w',-side=>'left');
+   } 
+
+   #############################################################################################
+
+   my $scrollbar   = $right_frame->Scrollbar( );
+      $hlist       = $right_frame->HList(-height=>28,-width=>44,-browsecmd=>\&hlist_select_call,-selectmode => "single",-yscrollcommand => ['set' => $scrollbar],-font=>'courier 10',)->pack(-side=>'left');
+   $scrollbar->configure(-command => ['yview' => $hlist]);
+   $scrollbar->pack(-side => 'right', -fill => 'y');
+   $hlist->pack(-side => 'left', -fill => 'both');
+
+   #############################################################################################
+
+   my $scrollbar2   = $right_frameB->Scrollbar( );
+      $hlist2       = $right_frameB->HList(-height=>28,-width=>40,-browsecmd=>\&hlist2_select_call,-selectmode => "single",-yscrollcommand => ['set' => $scrollbar2],-font=>'courier 10',)->pack(-side=>'left');
+   $scrollbar2->configure(-command => ['yview' => $hlist2]);
+   $scrollbar2->pack(-side => 'right', -fill => 'y');
+   $hlist2->pack(-side => 'left', -fill => 'both');
+   #############################################################################################
+   if($display_text_box){
+       $text_panel =$right_frame2->ROText(
+               -height=>28,
+               -width=>40,
+               -font=>'courier 10',
+               )->pack(-side=>'top');
+   }
+   ##################################################################################
+
+   my $next_frame=$left_frame->Frame()->pack(-side=>'top');
+   $next_frame=$next_frame->Frame()->pack(-side=>'top');
+   my $button=$next_frame->Button(-text=>"Search",-command=>[\&commands, "search"],-width=>24)->pack(-side=>'left');
+      $button=$next_frame->Button(-text=>"Clear",-command=>[\&commands, "Clear"],-width=>24)->pack(-side=>'left');
+
+   $next_frame=$left_frame->Frame()->pack(-side=>'top');
+
+      $button=$next_frame->Button(-text=>"Random",-command=>[\&commands, "random"])->pack(-side=>'left');
+      $button=$next_frame->Button(-text=>"Jank",-command=>[\&commands, "random jank"])->pack(-side=>'left');
+      $button=$next_frame->Button(-text=>"Neighbors",-command=>[\&commands, "find_sim"])->pack(-side=>'left');
+      $button=$next_frame->Button(-text=>"Add",-command=>[\&commands, "add to list"])->pack(-side=>'left');
+      $button=$next_frame->Button(-text=>"Remove",-command=>[\&commands, "remove to list"])->pack(-side=>'left');
+      $button=$next_frame->Button(-text=>"download",-command=>[\&commands, "download"])->pack(-side=>'left');
+      $button=$next_frame->Button(-text=>"Write",-command=>[\&commands, "write out search"])->pack(-side=>'left');
+      
+
+      $image_lbl = $right_frame3->Label()->pack(-side=>'top');
+   my $flip_button = $right_frame3->Button(-text=>'flip',-command=>[\&commands, "flip"],-width=>25)->pack(-side=>'left');
+   my $rotate_right = $right_frame3->Button(-text=>'Rot right',-command=>[\&commands, "right_turn"],-width=>25)->pack(-side=>'left');
+
+
+   my $stat   = $bottom_frame->Label(-textvariable=>\$status)->pack(-side=>'left');
+   my $notesa = $bottom_frame->Label(-textvariable=>\$notes1,-width=>40)->pack(-side=>'left');
+   my $notesb = $bottom_frame->Label(-textvariable=>\$notes2,-width=>40)->pack(-side=>'left');
+   my $notesc = $bottom_frame->Label(-textvariable=>\$notes3)->pack(-side=>'left');
+
+   my $scrollbar_rules   = $bottom_frame2->Scrollbar( );
+      $rulings = $bottom_frame2->ROText(
+               -height=>10,
+               -width=>205,
+               -font=>'courier 8',
+               -yscrollcommand => [set => $scrollbar_rules])->pack(-side=>'top');
             
-$scrollbar_rules->configure(-command => ['yview' => $rulings]);
-$scrollbar_rules->pack(-side => 'right', -fill => 'y');
-$rulings->pack(-side => 'left', -fill => 'both');
+   $scrollbar_rules->configure(-command => ['yview' => $rulings]);
+   $scrollbar_rules->pack(-side => 'right', -fill => 'y');
+   $rulings->pack(-side => 'left', -fill => 'both');
 
                                  
-                                 
+   `mkdir ART2 > NUL 2>&1`;
+   $mw->bind('<Key>' => \&key_hit);     
 
-`mkdir ART2 > NUL 2>&1`;
-
-$mw->bind('<Key>' => \&key_hit);     
-
-
-
-$mw->after(1000,\&init);
-MainLoop;
+   $mw->after(1000,\&init);
+   Tk::MainLoop();
+}
 
 ###############################################################################
 sub clear_dialogs{
@@ -576,16 +568,14 @@ sub key_hit{
    if($keysym_text eq "Return"){
       &commands("search");
    }
-   
-
-
-
 }
 
 ##################################################################################
 sub get_starting_list{
    
    my @LIST;
+   
+   print "Get starting list ; ed = $eliminate_dups\n";
    if($eliminate_dups){
       @LIST = @CHEAPEST_LIST;
    } else {
@@ -854,64 +844,76 @@ sub commands{
        @LIST = &get_starting_list();
               
        $d = $#LIST;
-       print "Staring from $d\n";       
+       print "Staring from $d\n";   
+       my $dbg_name = "avatar of woe";
        
        @LIST = &filter_on_sets($set_filter,@LIST);
        $d = $#LIST;
+       &dbg_check("sets",$dbg_name,@LIST);
        print "after filter_on_sets $d\n";
+       
        
        @LIST = &filter_on_rarity(@LIST);
        $d = $#LIST;
+       &dbg_check("rarity",$dbg_name,@LIST);
        print "after rarity $d\n";
        
        ########################################
        ## name filter
        @LIST = &filter_on_name($name_filter,@LIST);
        $d = $#LIST;
+       &dbg_check("name",$dbg_name,@LIST);
        print "After name filter $d\n";
        
        ########################################
        ## must haves;
        @LIST = &filter_on_must_color(@LIST);
-       $d = $#LIST;       
+       $d = $#LIST; 
+       &dbg_check("must have",$dbg_name,@LIST);
        print "After must have filter $d\n";
        
        ########################################
        ## must not haves;
        @LIST = &filter_on_not_allowed_color(@LIST);
-       $d = $#LIST;       
+       $d = $#LIST; 
+       &dbg_check("must not have",$dbg_name,@LIST);
        print "After must not have filter $d\n";       
        
        
        ########################################
        ## allowed to be;
        @LIST = &filter_on_allowed_color(@LIST);
-       $d = $#LIST;       
+       $d = $#LIST;    
+       &dbg_check("allowed",$dbg_name,@LIST);
        print "After must have filter $d\n";
        
        ########################################
        ## power / toughness;
        @LIST = &filter_on_power_toughness(@LIST);
-       $d = $#LIST;       
+       $d = $#LIST;  
+       &dbg_check("p/t",$dbg_name,@LIST);
        print "After power toughness filter $d\n";
        
        ########################################
        ## mana cost;
        @LIST = &filter_on_mana_cost(@LIST);
-       $d = $#LIST;       
+       $d = $#LIST; 
+       &dbg_check("mana cost",$dbg_name,@LIST);
        print "After mana cost filter $d\n";
        
        ########################################
        ## types;
        print "filtering types vs\n";
        @LIST = &filter_on_types(@LIST);
-       $d = $#LIST;       
+       $d = $#LIST;   
+       &dbg_check("types",$dbg_name,@LIST);
        print "After types filter $d\n";
        
        ########################################
        ## types;
        @LIST = &filter_not_types(@LIST);
-       $d = $#LIST;       
+       $d = $#LIST;     
+       &dbg_check("not types",$dbg_name,@LIST);
        print "After not types filter $d\n";
 
        ########################################
@@ -955,6 +957,8 @@ sub commands{
        $d = $#LIST;       
        print "After text filter $d\n"; 
        
+       &dbg_check("after text",$dbg_name,@LIST);
+       
        ########################################
        ## not text;
        ## text;
@@ -974,11 +978,15 @@ sub commands{
        $d = $#LIST;       
        print "After text filter $d\n"; 
        
+       &dbg_check("after not text",$dbg_name,@LIST);
+       
        ########################################
        ## or checks       
        @LIST = &filter_or_text(@LIST);
        $d = $#LIST;       
        print "After text filter $d\n"; 
+       
+       &dbg_check("after ors text",$dbg_name,@LIST);
        
        ########################################
        ## subtye type;
@@ -986,29 +994,35 @@ sub commands{
        $d = $#LIST;       
        print "After super_type filter $d\n"; 
        
+       &dbg_check("after sub type",$dbg_name,@LIST);
+       
        ########################################
        ## super type;
        @LIST = &filter_on_supertype(@LIST);
        $d = $#LIST;       
        print "After supertype filter $d\n"; 
+       &dbg_check("after supertype",$dbg_name,@LIST);
        
        ########################################
        if($english){
           @LIST = &filter_out_nonenglish(@LIST);
+          print "After english filter $d\n"; 
        }
-       
-       
-
        print "*****************************************\n";
        $d = $#LIST+1;
+       
+       if($d > 10000){
+          print NEW_SOCKET "DONE:X";
+          return;
+       }
        print "Found $d matches\n";
        for my $i (@LIST){
           my $uuid = $DATABASE[$i][$uuid_i];
           my $border = $DATABASE[$i][$border_i];
           my $funny  = $DATABASE[$i][$funny_i];
+          
           print "$i -> $border || $funny || $uuid || $DATABASE[$i][$name_i]\n";
        }
-       print "Found $d matches\n";
        
        &update_hlist_with_sort_of(@LIST);
        &time_log("search","stop");
@@ -1022,6 +1036,23 @@ sub commands{
    if($ready){
       &update_status("ready!");
    }
+}
+
+sub dbg_check{
+   my ($context,$name,@LIST) = @_;
+   my $found = 0;
+   for my $i (@LIST){
+      if($DATABASE[$i][$name_i]=~ /$name/i){
+         $found =1;
+      }
+   }
+   if($found){
+      print "$name is still here after $context\n";
+   } else {
+      print "$name is GONE!!!  after $context\n";
+   }
+   
+
 }
 
 sub update_hlist_with_sort_of{
@@ -1068,7 +1099,7 @@ sub update_hlist_with_sort_of{
       }
       @SORTED = sort { substr($a,0, 8) <=> substr($b,0, 8)  } @SORT;
       @MAP = ();
-      $hlist->delete('all');
+      &main_hlist_delete();
       for my $place (0..$#SORTED){
          my $this = $SORTED[$place];
          if($this =~ /(\d+.*)\:(\d+.*)/){
@@ -1081,10 +1112,50 @@ sub update_hlist_with_sort_of{
             my $display_string = &build_string_for($index,$sort_criteria);
 
             $MAP[$place] = $index;
-            $hlist->add($place ,-text=>$display_string);
+            &main_hlist_add($place,$display_string);
          }
       }
+      if(!$run_ui){
+         for my $each (@SORTED){
+            my ($dc,$i) = split(/\:/,$each);
+            my $uuid = $DATABASE[$i][$uuid_i];
+            my $get  = &get_download_name_for_uuid($uuid);
+            my $dir1 = substr($get,0,1);
+            my $dir2 = substr($get,1,1);
+            my $side = "front";
+            my $link = "https:\/\/cards.scryfall.io/large/$side/".$dir1."/".$dir2."/$get\.jpg";          
+            print NEW_SOCKET "LINK:$link\n";
+            my @SUPPORT  = &get_support_text($i);
+            for my $supp (@SUPPORT){
+               print NEW_SOCKET $supp."\n";
+            }            
+         }
+         print NEW_SOCKET "DONE:X\n";
+      }   
    }
+}
+
+###############################################################################
+sub get_support_text{
+   my ($i) = @_;
+   my @S;
+   my $price = &get_price($DATABASE[$i][$uuid_i]);
+   my $actual = &get_setname($DATABASE[$i][$set_i]);
+   my $name   = $DATABASE[$i][$name_i];
+   my $notes ="";
+   my $uuid=$DATABASE[$i][$uuid_i];
+   my $j = $LEGAL_HASH{$uuid};
+   for my $i (0..$#{$LEGALS[$j]}){
+      if($LEGALS[$j][$i] eq "Legal"){
+          $notes .= "$LEGALS[0][$i]:";
+      }
+   }
+   ## set must be last!
+   push(@S,"NAME:$name");
+   push(@S,"PRICE:$price");
+   push(@S,"LEGAL:$notes");   
+   push(@S,"SET:$actual"); 
+   return @S;
 }
 ###############################################################################
 sub output_search_list{
@@ -1098,7 +1169,10 @@ sub output_search_list{
 sub update_status{
    my ($to) = @_;
    $status=$to;
-   $mw->update();
+   print "Status = $status\n";
+   if($run_ui){
+      $mw->update();
+   }   
    
 }
 
@@ -1210,7 +1284,7 @@ sub get_i_for_uuid{
 
 ###############################################################################
 sub redisplay_working{
-   $hlist2->delete('all');
+   &second_hlist_delete();
    
    open(WORKING,">working_set.txt");
    my $place = 0;
@@ -1220,7 +1294,8 @@ sub redisplay_working{
    
       my $display_string = &build_string_for($i);
       $MAP2[$place] = $i;
-      $hlist2->add($place ,-text=>$display_string);
+      &second_hlist_add($place,$display_string);
+      # $hlist2->add($place ,-text=>$display_string);
       $place++;
    }
    
@@ -1294,13 +1369,12 @@ sub find_similair{
    }   
    
    @LIST = &clip_dups(@LIST);
-   $hlist->delete('all');
-   
+   &main_hlist_delete();   
    my $place = 0;
    for my $i (@LIST){
       my $display_string = &build_string_for($i);
       $MAP[$place] = $i;
-      $hlist->add($place ,-text=>$display_string);
+      &main_hlist_add($place,$display_string);
       $place++;
    }
    
@@ -1356,128 +1430,127 @@ sub clean_name_for_dos{
 sub hlist_select_call{
    my ($what,$which_map) = @_;
    
-   &time_log("hlist_select_call","start");
-
+   if($run_ui){
    
-   if(defined($which_map)){
-      if($which_map == 2){
-         $what = $MAP2[$what];
+      &time_log("hlist_select_call","start");
+
+      if(defined($which_map)){
+         if($which_map == 2){
+            $what = $MAP2[$what];
+         } else {
+            $what = $MAP[$what];      
+         }
       } else {
-         $what = $MAP[$what];      
+         $what = $MAP[$what];
+      }   
+      $starting = $what;   
+
+      if($display_text_box){
+         $text_panel->delete('0.0','end');
       }
-   } else {
-      $what = $MAP[$what];
-   }   
-   $starting = $what;   
-   
-   if($display_text_box){
-      $text_panel->delete('0.0','end');
-   }
 
-   my $text = "";
-   my $i = $what;
-   my $actual = &get_setname($DATABASE[$i][$set_i]);
+      my $text = "";
+      my $i = $what;
+      my $actual = &get_setname($DATABASE[$i][$set_i]);
 
-   my $fname = $DATABASE[$i][$fname_i];
-   my $name  = $DATABASE[$i][$name_i];
-   $ascii_name = $DATABASE[$i][$asci_name_i];
-   if($ascii_name =~ /\w/){
-   } else {
-      $ascii_name = $name;
-   }
- #  print "name = $ascii_name =>";
-   $ascii_name = &clean_name_for_dos($ascii_name);
- #  print "name = $ascii_name\n";
+      my $fname = $DATABASE[$i][$fname_i];
+      my $name  = $DATABASE[$i][$name_i];
+      $ascii_name = $DATABASE[$i][$asci_name_i];
+      if($ascii_name =~ /\w/){
+      } else {
+         $ascii_name = $name;
+      }
+      $ascii_name = &clean_name_for_dos($ascii_name);
 
-   my $uuid = $DATABASE[$i][$uuid_i];
-   print "UUID=$uuid\n";
-   $get_this_thing = &get_download_name_for_uuid($uuid);
-   my $flavor_name = $fname;
-   if($flavor_name ne ""){
-      $name = "$flavor_name. aka $name";
-   } elsif($fname ne ""){
-      $name = "$fname aka $name";
-   }
+      my $uuid = $DATABASE[$i][$uuid_i];
+      print "UUID=$uuid\n";
+      $get_this_thing = &get_download_name_for_uuid($uuid);
+      my $flavor_name = $fname;
+      if($flavor_name ne ""){
+         $name = "$flavor_name. aka $name";
+      } elsif($fname ne ""){
+         $name = "$fname aka $name";
+      }
+
+      $text .=  &split_up_text($name)."\n";
+      $text .=  $DATABASE[$i][$type_i]."\n";
+      $text .=  $DATABASE[$i][$color_i]."\n";
+      $text .=  $DATABASE[$i][$mana_cost_i]."\n\n";
+      my $p = $DATABASE[$i][$power_i];
+      my $t = $DATABASE[$i][$toughness_i];
+      if(($p ne "") || ($t ne "")){
+         $text .= "$DATABASE[$i][$power_i] / $DATABASE[$i][$toughness_i]\n";
+      }
+      $text .= "CMC : $DATABASE[$i][$manavalue_i]\n";
+      $text .= "$DATABASE[$i][$rarity_i]\n";
+      $text .= "$DATABASE[$i][$supertypes_i]\n";
+      $text .= "$DATABASE[$i][$subtypes_i]\n";
+      $text .= "Salt = $DATABASE[$i][$salty_i]\n";
+      $text .= "EDHRANK = $DATABASE[$i][$edhrank_i]\n";
+      $text .= "---------------------------------------\n";
+      if($display_text_box){
+         $text_panel->insert('end',$text);
+      }
+
+      my $card_text = $DATABASE[$i][$text_i];
+      $card_text =~ s/\\n/\n/g;
+      my @LINES = split(/\n/,$card_text);
+
+      if($display_text_box){
+         for my $line (@LINES){
+            my $this = &split_up_text($line);
+            if($this ne ""){
+               $this .= "\n\n";
+
+               $text_panel->insert('end',$this);
+               $this = "";
+            }
+         }
+
+         $text_panel->insert('end',"Set is \"$actual\"\n");
+         $text_panel->insert('end',"Flavor:\n");
+         my $flavor = &split_up_text($DATABASE[$i][$flavor_i]);
+         $text_panel->insert('end',"$flavor\n");
+      }
+
+      $get_front = 1;
+      $turn_right = 0;
 
 
-   $text .=  &split_up_text($name)."\n";
-   $text .=  $DATABASE[$i][$type_i]."\n";
-   $text .=  $DATABASE[$i][$color_i]."\n";
-   $text .=  $DATABASE[$i][$mana_cost_i]."\n\n";
-   my $p = $DATABASE[$i][$power_i];
-   my $t = $DATABASE[$i][$toughness_i];
-   if(($p ne "") || ($t ne "")){
-      $text .= "$DATABASE[$i][$power_i] / $DATABASE[$i][$toughness_i]\n";
-   }
-   $text .= "CMC : $DATABASE[$i][$manavalue_i]\n";
-   $text .= "$DATABASE[$i][$rarity_i]\n";
-   $text .= "$DATABASE[$i][$supertypes_i]\n";
-   $text .= "$DATABASE[$i][$subtypes_i]\n";
-   $text .= "Salt = $DATABASE[$i][$salty_i]\n";
-   $text .= "EDHRANK = $DATABASE[$i][$edhrank_i]\n";
-   $text .= "---------------------------------------\n";
-   if($display_text_box){
-      $text_panel->insert('end',$text);
-   }
+      ## &show_prices($uuid);
 
-   my $card_text = $DATABASE[$i][$text_i];
-   $card_text =~ s/\\n/\n/g;
-   my @LINES = split(/\n/,$card_text);
+      my $price = &get_price($uuid);
 
-   if($display_text_box){
-      for my $line (@LINES){
-         my $this = &split_up_text($line);
-         if($this ne ""){
-            $this .= "\n\n";
+      open(CURIOUS,">last_card.txt");
+      for my $z (0..$#{$DATABASE[0]}){
+         print CURIOUS "$DATABASE[0][$z] -> $DATABASE[$i][$z]\n";
+      }
+      close(CURIOUS);
 
-            $text_panel->insert('end',$this);
-            $this = "";
+      my $rulings_text= &get_rulings($uuid);
+      $rulings->delete('0.0','end');
+      $rulings->insert('end',$rulings_text);
+
+
+      $notes1 = "Cardkingdom price = ".$price;
+      $notes2 = "Set:$actual";
+
+      my $j = $LEGAL_HASH{$uuid};
+
+      $notes3 = "Legal:";
+
+      for my $i (0..$#{$LEGALS[$j]}){
+         if($LEGALS[$j][$i] eq "Legal"){
+            $notes3 .= "$LEGALS[0][$i]:";
          }
       }
+      $notes3 .= " || found:$search_found";
 
-      $text_panel->insert('end',"Set is \"$actual\"\n");
-      $text_panel->insert('end',"Flavor:\n");
-      my $flavor = &split_up_text($DATABASE[$i][$flavor_i]);
-      $text_panel->insert('end',"$flavor\n");
+
+      &time_log("hlist_select_call","stop");
+
+      $mw->after(1,\&get_art_and_display);
    }
-
-   $get_front = 1;
-   $turn_right = 0;
-   
-   
-   ## &show_prices($uuid);
-   
-   my $price = &get_price($uuid);
-   
-   open(CURIOUS,">last_card.txt");
-   for my $z (0..$#{$DATABASE[0]}){
-      print CURIOUS "$DATABASE[0][$z] -> $DATABASE[$i][$z]\n";
-   }
-   close(CURIOUS);
-   
-   my $rulings_text= &get_rulings($uuid);
-   $rulings->delete('0.0','end');
-   $rulings->insert('end',$rulings_text);
-
-   
-   $notes1 = "Cardkingdom price = ".$price;
-   $notes2 = "Set:$actual";
-   
-   my $j = $LEGAL_HASH{$uuid};
-   
-   $notes3 = "Legal:";
-
-   for my $i (0..$#{$LEGALS[$j]}){
-      if($LEGALS[$j][$i] eq "Legal"){
-         $notes3 .= "$LEGALS[0][$i]:";
-      }
-   }
-   $notes3 .= " || found:$search_found";
-
-   
-   &time_log("hlist_select_call","stop");
-
-   $mw->after(1,\&get_art_and_display);
     
 }
 
@@ -2101,9 +2174,6 @@ sub filter_on_legal{
    for my $i (@LIST){
       if(&is_legal($i)){
          push(@NEW_LIST,$i);
-      } else {
-         my $name = $DATABASE[$i][$name_i];
-         print DBG "$name is not legal $DATABASE[$i][$uuid_i]\n";
       }
    }     
    return @NEW_LIST;
@@ -2159,12 +2229,8 @@ sub filter_on_name{
    if($filt !~ /\w/){return @LIST;}
    my @NEW_LIST = ();
    for my $i (@LIST){
-      print DBG "$DATABASE[$i][$name_i]";
       if($DATABASE[$i][$name_i] =~ /$filt/i){
           push(@NEW_LIST,$i);
-          print DBG "In\n";
-      } else {
-         print DBG "out\n";
       }
    }
    return @NEW_LIST;
@@ -2213,18 +2279,7 @@ sub init{
    $uuid_leg_i    = &find_col  ("uuid",@{$LEGALS[0]});
    for my $j (1..$#LEGALS){
       $LEGAL_HASH{$LEGALS[$j][$uuid_leg_i]} = $j;
-   }
-   open(DBG_LEGALS,">legal_dbg.txt");
-   for my $row (1..$#LEGALS){
-      for my $col (0..$#{$LEGALS[0]}){
-         my $which=$LEGALS[0][$col];
-         print DBG_LEGALS "$which=>$LEGALS[$row][$col],";
-      }
-      print DBG_LEGALS "\n";
-   }
-   close(DBG_LEGALS);
-   
-   
+   }   
    
    
    ## cardIdentifiers.csv
@@ -2232,9 +2287,6 @@ sub init{
     
    $card_id_uuid_i       = &find_col("uuid",@{$CARD_IDS[0]});
    $card_id_scryfallId_i = &find_col("scryfallId",@{$CARD_IDS[0]});
-   
-   
-   
    
    @PRICES  =&read_csv("cardPrices.csv");
    $price_uuid_i         = &find_col("uuid",@{$PRICES[0]});
@@ -2304,7 +2356,6 @@ sub init{
       
    }
    close(KW);
-   
    
    &update_status("building hash for downloads from uuids...");
    &build_hash_for_downloadname_from_uuid();
@@ -2485,7 +2536,9 @@ sub do_html_stuff{
 }   
 ##################################################################################
 sub display_null{
-   &display_image("new-image.jpg");
+   if($run_ui){
+      &display_image("new-image.jpg");
+   }   
 
 
 
@@ -2566,6 +2619,40 @@ sub get_art_and_display{
    &display_image("ART2\\$ascii_name.jpg");
 }
 
+
+##################################################################################
+sub main_hlist_add{
+   my ($i,$string) = @_;
+   if($run_ui){
+      $hlist->add($i ,-text=>$string);
+   }
+}
+
+##################################################################################
+
+sub main_hlist_delete{
+   if($run_ui){
+      $hlist->delete('all');
+   }
+}
+
+##################################################################################
+
+sub second_hlist_add{
+   my ($i,$string) = @_;
+   if($run_ui){
+      $hlist2->add($i ,-text=>$string);
+   }
+}
+
+##################################################################################
+
+sub second_hlist_delete{
+   if($run_ui){
+      $hlist2->delete('all');
+   }
+}
+
 ##################################################################################
 sub pick_a_random_card2{
    my ($jank) = @_;
@@ -2585,11 +2672,11 @@ sub pick_a_random_card2{
           }   
       } 
       if((&is_legal($i)) && ($reject == 0)){
-         $hlist->delete('all');
+         &main_hlist_delete();
          my $display_string = &build_string_for($i);
          @MAP=();
          $MAP[$i] = $i;
-         $hlist->add(0 ,-text=>$display_string);
+         &main_hlist_add(0,$display_string);
          &hlist_select_call($i) ;
          $not_done = 0;
       } else {
@@ -2625,11 +2712,11 @@ sub pick_a_random_card{
           }   
       } 
       if((&is_legal($i)) && ($reject == 0)){
-         $hlist->delete('all');
+         &main_hlist_delete();
          my $display_string = &build_string_for($i);
          @MAP=();
          $MAP[0] = $i;
-         $hlist->add(0 ,-text=>$display_string);
+         &main_hlist_add(0,$display_string);
          &hlist_select_call(0) ;
          $not_done = 0;
       } else {
@@ -2726,4 +2813,129 @@ sub show_timing{
    }
 
 }
- 
+
+###############################################################################
+sub get_socket_running{
+
+   my $port = 12345;
+   my $proto = getprotobyname('tcp');
+
+   socket(SOCKET, PF_INET, SOCK_STREAM, $proto) or die "Can't create socket: $!";
+   setsockopt(SOCKET, SOL_SOCKET, SO_REUSEADDR, 1) or die "Can't set socket option: $!";
+   bind(SOCKET, pack_sockaddr_in($port, INADDR_ANY)) or die "Can't bind to port $port: $!";
+   listen(SOCKET, 5) or die "Can't listen: $!";
+   
+   autoflush NEW_SOCKET 1;
+   print "Socket is ready!!!\n";
+   # 5. Accept and handle client
+   while (my $client_addr = accept(NEW_SOCKET, SOCKET)) {
+       my $name = gethostbyaddr($client_addr, AF_INET);
+       print "Connection received from $name\n";
+       autoflush NEW_SOCKET 1;
+       autoflush SOCKET 1;
+       
+       my $request = <NEW_SOCKET>;
+       print "R=$request\n";
+       if($request =~ /^request\:(.*)/){
+          my @ITEMS = split(/\:/,$1);
+          &handle_search_for(@ITEMS);
+       }   
+   }  
+
+
+
+}
+
+###############################################################################
+sub handle_search_for{
+   my (@STUFF) = @_;
+   
+   &clear_dialogs();
+   
+   while($#STUFF > -1){
+      my $this = shift(@STUFF);
+      my $how  = shift(@STUFF);
+      print "$this $how\n";
+      if($this eq "eliminate_dups"){
+         $eliminate_dups = $how;
+      } elsif($this eq "legality_selected"){
+         $legality_selected = $how;
+      } elsif($this eq "name_filter"){
+         $name_filter = $how;
+      } elsif($this eq "set_filter"){
+         $set_filter = $how;
+      } elsif($this eq "english"){
+         $english = $how;
+      } elsif($this eq "mythic"){
+         $mythic = $how;
+      } elsif($this eq "rare"){
+         $rare = $how;
+      } elsif($this eq "uncommon"){
+         $uncommon = $how;
+      } elsif($this eq "common"){
+         $common = $how;
+      } elsif($this eq "special"){
+         $special = $how;
+      } elsif($this eq "high_power"){
+         $high_power = $how;
+      } elsif($this eq "low_power"){
+         $low_power = $how;
+      } elsif($this eq "high_toughness"){
+         $high_toughness = $how;
+      } elsif($this eq "low_toughness"){
+         $low_toughness = $how;
+      } elsif($this eq "low"){
+         $low = $how;
+      } elsif($this eq "high"){
+         $high = $how;
+      } elsif($this eq "subtype"){
+         $subtype = $how;
+      } elsif($this eq "super_type"){
+         $super_type = $how;
+      } elsif($this eq "text1"){
+         $text1 = $how;
+      } elsif($this eq "text2"){
+         $text2 = $how;
+      } elsif($this eq "text3"){
+         $text3 = $how;
+      } elsif($this eq "text4"){
+         $text4 = $how;
+      } elsif($this eq "text5"){
+         $text5 = $how;
+      } elsif($this eq "text6"){
+         $text6 = $how;
+      } elsif($this eq "text7"){
+         $text7 = $how;
+      } elsif($this eq "text8"){
+         $text8 = $how;
+      } elsif($this eq "ntext1"){
+         $ntext1 = $how;
+      } elsif($this eq "ntext1"){
+         $ntext2 = $how;
+      } elsif($this eq "ntext1"){
+         $ntext3 = $how;
+      } elsif($this eq "ntext1"){
+         $ntext4 = $how;
+      } elsif($this eq "sort_by"){
+         $sort_by = $how;
+      } elsif($this eq "MUST_HAVE"){
+         @MUST_HAVE = split(/\-/,$how);
+      } elsif($this eq "ALLOWED_HAVE"){
+         @ALLOWED_HAVE = split(/\-/,$how);
+      } elsif($this eq "NOT_ALLOWED_HAVE"){
+         @NOT_ALLOWED_HAVE = split(/\-/,$how);
+      } elsif($this eq "ALLOWED_TYPES"){
+         @ALLOWED_TYPES = split(/\-/,$how);
+      } elsif($this eq "NOT_ALLOWED_TYPES"){
+         @NOT_ALLOWED_TYPES = split(/\-/,$how);
+      } elsif($this eq "ALLOWED_TYPES"){
+         @ALLOWED_TYPES = split(/\-/,$how);
+      } elsif($this eq "OR_TEXT"){
+         @OR_TEXT = split(/\-/,$how);
+      } elsif($this eq "ALLOWED_TYPES"){
+         @ALLOWED_TYPES = split(/\-/,$how);
+      }         
+   }
+   
+   &commands("search");
+}

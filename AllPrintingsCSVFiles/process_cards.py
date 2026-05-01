@@ -3,6 +3,7 @@ import requests
 import pandas as pd
 import os
 import re
+import socket
 ##Globals##
 searches={"format": "Don't Care",
           "name_contains": "",
@@ -13,6 +14,7 @@ searches={"format": "Don't Care",
           "display_uncommon": True,
           "display_rare": True,
           "display_mythic_rare": True,
+          "display_special": True,   
           "must_be_white": False,
           "must_be_blue": False,
           "must_be_black": False,
@@ -34,10 +36,8 @@ searches={"format": "Don't Care",
           "toughness_high": "",
           "cmc_low": "",
           "cmc_high": "",
-          "subtype1": "",
-          "subtype2": "",
-          "supertype1": "",
-          "supertype2": "",
+          "subtype": "",
+          "supertype": "",
           "allowed_types_artifact": False,
           "allowed_types_creature": False,
           "allowed_types_enchantment": False,
@@ -75,6 +75,95 @@ searches={"format": "Don't Care",
           "sort_by": "CMC"
           }
 
+## request {MUST_HAVE:----:
+#           ALLOWED_HAVE:1-1-1-1-1:
+#           NOT_ALLOWED_HAVE:----:
+#           ALLOWED_TYPES:1-1-1-1-1-1-0-0-0-0:
+#           NOT_ALLOWED_TYPES:0-0-0-0-0-0-0-0-0-0:
+#           name_filter:avatar:
+#           text1::
+#           text2::
+#           text3::
+#           text4::
+#           text5::
+#           text6::
+#           low::
+#           high::
+#           OR_TEXT:---:
+#           low_power::
+#           high_power::
+#           low_toughness::
+#           high_toughness::
+#           super_type::
+#           type::
+#           set_filter::
+#           eliminate_dups:1:
+#           english:1:
+#           mythic:1:
+#           rare:1:
+#           uncommon:1:
+#           common:1:
+#           special:1
+#           }
+
+def socket_transform(searches):
+    request = {}
+    request["MUST_HAVE"] = "".join(["1-" if searches[f"must_be_{color}"] else "0-" for color in socket_colors])
+    request["ALLOWED_HAVE"] = "".join(["1-" if searches[f"allowed_colors_{color}"] else "0-" for color in socket_colors])
+    request["NOT_ALLOWED_HAVE"] = "".join(["1-" if searches[f"cannot_be_{color}"] else "0-" for color in socket_colors])
+    request["ALLOWED_TYPES"] = "".join(["1-" if searches[f"allowed_types_{type.lower()}"] else "0-" for type in allowed_types])
+    request["NOT_ALLOWED_TYPES"] = "".join(["1-" if searches[f"not_allowed_types_{type.lower()}"] else "0-" for type in not_allowed_types])
+    request["name_filter"] = searches["name_contains"]
+    request["text1"] = searches["and1"]
+    request["text2"] = searches["and2"]
+    request["text3"] = searches["and3"]
+    request["text4"] = searches["and4"]
+    request["text5"] = searches["and5"]
+    request["text6"] = searches["and6"]
+    request["text7"] = searches["and7"]
+    request["text8"] = searches["and8"]
+    request["OR_TEXT"] = "".join([searches[f"or{i}"] +"-" for i in range(1,4)])
+    request["ntext1"] = searches["not1"]
+    request["ntext2"] = searches["not2"]
+    request["ntext3"] = searches["not3"]
+    request["ntext4"] = searches["not4"]
+    request["low"] = searches["cmc_low"]
+    request["high"] = searches["cmc_high"]
+    request["low_power"] = searches["power_low"]
+    request["high_power"] = searches["power_high"]
+    request["low_toughness"] = searches["toughness_low"]
+    request["high_toughness"] = searches["toughness_high"]
+    request["super_type"] = searches["supertype"]
+    request["type"] = searches["subtype"]
+    request["set_filter"] = searches["set_name_contains"]
+    request["eliminate_dups"] = "1" if searches["display_no_dupes"] else "0"
+    request["english"] = "1" if searches["display_english_only"] else "0"
+    request["mythic"] = "1" if searches["display_mythic_rare"] else "0"
+    request["rare"] = "1" if searches["display_rare"] else "0"
+    request["uncommon"] = "1" if searches["display_uncommon"] else "0"
+    request["common"] = "1" if searches["display_common"] else "0"
+    request["special"] = "1" if searches["display_special"] else "0"
+    request["sort_by"] = searches["sort_by"]
+    request["legality_selected"] = searches["format"].lower().replace(" ", "_").replace("'", "")
+    st.write(request)
+    return request
+
+def send_request(request):
+    HOST =  'localhost' # The server's hostname or IP address
+    PORT = 12345       # The port used by the server
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.connect((HOST, PORT))
+            s.sendall(str(request).encode(encoding='utf-8'))
+            st.write("Search sent!")
+            data = s.recv(1024)
+            st.write('Received', repr(data))
+    except ConnectionRefusedError:
+        st.write("Could not connect to Perl!")
+        
+
+    
+
 text_ands = ["and1", "and2", "and3", "and4", "and5", "and6", "and7", "and8"]
 text_ors = ["or1", "or2", "or3", "or4"]
 text_nots = ["not1", "not2", "not3", "not4"]
@@ -88,6 +177,7 @@ cannot_be=["White", "Blue", "Black", "Red", "Green"]
 allowed_types=["Artifact", "Creature", "Enchantment", "Instant", "Land", "Planeswalker", "Sorcery", "Tribal", "Legendary"]
 not_allowed_types=["Artifact", "Creature", "Enchantment", "Instant", "Land", "Planeswalker", "Sorcery", "Tribal", "Legendary"]
 sort_by_list=["CMC","EDH Rank","Salty","Price"]
+socket_colors = ["white", "blue", "green", "red", "black"]
 ###############################################################################
 
 def search(searches):
@@ -95,7 +185,7 @@ def search(searches):
     text_ors = [searches["or1"], searches["or2"], searches["or3"], searches["or4"]]
     text_nots = [searches["not1"], searches["not2"], searches["not3"], searches["not4"]]
     
-ready = False
+ready = True
 if not ready:
     with st.status(label="Preparing...", expanded=True, state="running") as status:
         card_foreign_data = pd.read_csv('AllPrintingsCSVFiles/cardForeignData.csv')
@@ -140,11 +230,12 @@ st.subheader("Display list")
 col1, col2 = st.columns(2)
 with col1:    st.checkbox("No dupes", key="display_no_dupes", value=True)
 with col2:    st.checkbox("English Only", key="display_english_only", value=True)
-col3, col4, col5, col6, = st.columns(4)
+col3, col4, col5, col6, col7 = st.columns(5)
 with col3:    st.checkbox("Common", key="display_common", value=True)
 with col4:    st.checkbox("Uncommon", key="display_uncommon", value=True)
 with col5:    st.checkbox("Rare", key="display_rare", value=True)
-with col6:    st.checkbox("Mythic Rare", key="display_mythic_rare", value=True)
+with col6:    st.checkbox("Mythic", key="display_mythic_rare", value=True)
+with col7:    st.checkbox("Special", key="display_special", value=True)
 
 ##Color selection
 st.subheader("Must be:")
@@ -187,11 +278,9 @@ with col5:    st.text_input("CMC Greater Than", key="cmc_low")
 with col6:    st.text_input("CMC Less Than", key="cmc_high")
 
 ##Subtype/Supertype selection
-col1, col2, col3, col4 = st.columns(4)
-with col1: st.text_input("Subtype:", key="subtype1")
-with col2: st.text_input("Subtype:", key="subtype2")
-with col3: st.text_input("Supertype:", key="supertype1")
-with col4: st.text_input("Supertype:", key="supertype2")
+col1, col3 = st.columns(2)
+with col1: st.text_input("Subtype:", key="subtype")
+with col3: st.text_input("Supertype:", key="supertype")
 ##Type selection
 st.subheader("Allowed Types:")
 cols = st.columns(5)
@@ -255,8 +344,12 @@ if st.session_state.search:
     for key in searches.keys():
         searches[key] = st.session_state[key]
     st.write(searches)
-    search(searches)
+    send = socket_transform(searches)
+    onward = str(send)
+    st.write(onward)
+    send_request(onward)
+##Display results
+with st.sidebar as left:
+    st.header("Results:")
 
-##Display
-st.subheader("Results:")
 ##############################################################################
