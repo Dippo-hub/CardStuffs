@@ -74,7 +74,9 @@ searches={"format": "Don't Care",
           "not4": "",
           "sort_by": "CMC"
           }
-
+onward = ""
+results = []
+recieved_data = []
 ## request {MUST_HAVE:----:
 #           ALLOWED_HAVE:1-1-1-1-1:
 #           NOT_ALLOWED_HAVE:----:
@@ -106,7 +108,7 @@ searches={"format": "Don't Care",
 #           special:1
 #           }
 
-def socket_transform(searches):
+def transform_to_request(searches):
     request = {}
     request["MUST_HAVE"] = "".join(["1-" if searches[f"must_be_{color}"] else "0-" for color in socket_colors])
     request["ALLOWED_HAVE"] = "".join(["1-" if searches[f"allowed_colors_{color}"] else "0-" for color in socket_colors])
@@ -149,20 +151,32 @@ def socket_transform(searches):
     return request
 
 def send_request(request):
-    HOST =  'localhost' # The server's hostname or IP address
+
+    HOST =  '127.0.0.1' # The server's hostname or IP address
     PORT = 12345       # The port used by the server
+    recieved_data = []
     try:
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            s.settimeout(120.0)
             s.connect((HOST, PORT))
             s.sendall(str(request).encode(encoding='utf-8'))
             st.write("Search sent!")
             data = s.recv(1024)
-            st.write('Received', repr(data))
+            while not re.search(pattern="DONE:", string=data.decode('utf-8')):
+                if not data:
+                    st.sidebar.write("Shit data")
+                st.sidebar.write(data.decode("utf-8"))
+                data = s.recv(1024)
+            st.sidebar.write(data.decode("utf-8"))
+    except socket.timeout:
+        st.error("Too slow!")
     except ConnectionRefusedError:
         st.write("Could not connect to Perl!")
-        
 
     
+        
+
+
 
 text_ands = ["and1", "and2", "and3", "and4", "and5", "and6", "and7", "and8"]
 text_ors = ["or1", "or2", "or3", "or4"]
@@ -341,15 +355,23 @@ st.selectbox("Sort by", sort_by_list, key="sort_by")
 ##Search
 st.button("Search", key="search")
 if st.session_state.search:
-    for key in searches.keys():
-        searches[key] = st.session_state[key]
-    st.write(searches)
-    send = socket_transform(searches)
-    onward = str(send)
-    st.write(onward)
-    send_request(onward)
+    with st.sidebar.status(label = "Thinking...", state="running") as status:
+        try:
+            for key in searches.keys():
+                searches[key] = st.session_state[key]
+            send = transform_to_request(searches)
+            start = "request:"
+            onward = "".join(f"{key}:{send[key]}:" for key in send.keys())
+            go_forth = start + onward + "\n"
+            st.write(go_forth)
+            results = send_request(go_forth)
+            status.update(label="Stuff!", state="complete")
+        except Exception as e:
+            st.sidebar.error(f"An error occurred: {str(e)}")
+            status.update(label="SHIT", state="error")
 ##Display results
 with st.sidebar as left:
     st.header("Results:")
+    st.write(results)
 
 ##############################################################################
