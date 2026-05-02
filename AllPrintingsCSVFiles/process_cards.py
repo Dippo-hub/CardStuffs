@@ -1,9 +1,35 @@
 import streamlit as st
 import requests
 import pandas as pd
-import os
 import re
+import subprocess
+import time
+import atexit
 import socket
+
+def start_perl_server():
+    proc = subprocess.Popen(
+        ["perl", "AllPrintingsCSVFiles/process_cards.pl"],
+        cwd="/workspaces/CardStuffs",
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+    atexit.register(proc.terminate)
+    wait_for_port("127.0.0.1", 12345, timeout=10)
+    return proc
+
+def wait_for_port(host, port, timeout=10):
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        try:
+            with socket.create_connection((host, port), timeout=1):
+                return
+        except OSError:
+            time.sleep(0.2)
+    raise RuntimeError(f"Port {port} not ready")
+
+
 ##Globals##
 searches={"format": "Don't Care",
           "name_contains": "",
@@ -76,7 +102,6 @@ searches={"format": "Don't Care",
           }
 onward = ""
 results = []
-recieved_data = []
 ## request {MUST_HAVE:----:
 #           ALLOWED_HAVE:1-1-1-1-1:
 #           NOT_ALLOWED_HAVE:----:
@@ -147,34 +172,90 @@ def transform_to_request(searches):
     request["special"] = "1" if searches["display_special"] else "0"
     request["sort_by"] = searches["sort_by"]
     request["legality_selected"] = searches["format"].lower().replace(" ", "_").replace("'", "")
-    st.write(request)
+    #st.write(request)
     return request
 
 def send_request(request):
-
+    global result
+    result = []
     HOST =  '127.0.0.1' # The server's hostname or IP address
     PORT = 12345       # The port used by the server
-    recieved_data = []
     try:
+        #start_perl_server()
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
             s.settimeout(120.0)
             s.connect((HOST, PORT))
             s.sendall(str(request).encode(encoding='utf-8'))
             st.write("Search sent!")
-            data = s.recv(1024)
-            while not re.search(pattern="DONE:", string=data.decode('utf-8')):
+            while True:
+                data = s.recv(1024)
+                richard = data.decode('utf-8')
                 if not data:
                     st.sidebar.write("Shit data")
-                st.sidebar.write(data.decode("utf-8"))
-                data = s.recv(1024)
-            st.sidebar.write(data.decode("utf-8"))
+                else:
+                    #st.write(richard)
+                    result.append(richard)
+                    if re.search(pattern="DONE:", string=richard):
+                        break
+
     except socket.timeout:
         st.error("Too slow!")
     except ConnectionRefusedError:
         st.write("Could not connect to Perl!")
+    finally:
+        return result
 
-    
+def get_image(art):
+    scene = art.replace("LINK:","")
+    try:
+        # If it's already a direct image URL, return it
+        if scene.endswith(('.jpg', '.png', '.gif', '.webp')):
+            return scene
         
+        # Otherwise, treat it as an API endpoint
+        else:
+            stig = requests.get(f"https://api.scryfall.com/cards/named?exact={scene}")
+            if stig.status_code == 200:
+                img = stig.json()
+                if 'card_faces' in img:
+                    back = img['card_faces'][1]
+                    back_img = back['image_uris']['normal']
+                    st.image(back_img)
+                else:
+                    card = img['image_uris']['normal']
+                    st.image(card)
+    except Exception as e:
+        st.error(f"{e} occured while getting art for {scene}")
+        return None
+    
+def pretty_results(jeremy=list):
+    #st.write(jeremy)
+    pretty = [thing.split("\n") for thing in jeremy]
+    #st.write(pretty)
+    for bonk in pretty:
+        for doink in bonk:
+            doink = str(doink)
+            if doink == "":
+                continue
+            elif re.search("LINK:", doink):
+                img = get_image(doink)
+                back_img = get_image(doink.replace("front","back"))
+                if img:
+                    st.image(img)
+                if back_img is not None:
+                    st.image(back_img)
+            elif re.search("NAME:", str(doink)):
+                st.write(f"Name: {doink.replace("NAME:", "")}")
+            elif re.search("PRICE:",doink):
+                st.write(f"Price: ${doink.replace("PRICE:","")}")
+            elif re.search("LEGAL:", doink):
+                st.write(f"Legal in: {doink.replace("LEGAL:","").replace(":",", ")}")
+            elif re.search("SET:",doink):
+                st.write(f"Set is: {doink.replace("SET:","")}")
+            elif re.search("DONE:", doink):
+                continue
+            else:
+                st.write(f"wtf is {doink}")
 
 
 
@@ -244,10 +325,11 @@ st.subheader("Display list")
 col1, col2 = st.columns(2)
 with col1:    st.checkbox("No dupes", key="display_no_dupes", value=True)
 with col2:    st.checkbox("English Only", key="display_english_only", value=True)
-col3, col4, col5, col6, col7 = st.columns(5)
+col3, col4, col5 = st.columns(3)
 with col3:    st.checkbox("Common", key="display_common", value=True)
 with col4:    st.checkbox("Uncommon", key="display_uncommon", value=True)
 with col5:    st.checkbox("Rare", key="display_rare", value=True)
+col6, col7 = st.columns(2)
 with col6:    st.checkbox("Mythic", key="display_mythic_rare", value=True)
 with col7:    st.checkbox("Special", key="display_special", value=True)
 
@@ -356,22 +438,19 @@ st.selectbox("Sort by", sort_by_list, key="sort_by")
 st.button("Search", key="search")
 if st.session_state.search:
     with st.sidebar.status(label = "Thinking...", state="running") as status:
-        try:
             for key in searches.keys():
                 searches[key] = st.session_state[key]
             send = transform_to_request(searches)
             start = "request:"
             onward = "".join(f"{key}:{send[key]}:" for key in send.keys())
             go_forth = start + onward + "\n"
-            st.write(go_forth)
+            #st.write(go_forth)
             results = send_request(go_forth)
             status.update(label="Stuff!", state="complete")
-        except Exception as e:
-            st.sidebar.error(f"An error occurred: {str(e)}")
-            status.update(label="SHIT", state="error")
+
 ##Display results
-with st.sidebar as left:
+with st.sidebar:    
     st.header("Results:")
-    st.write(results)
+    pretty_results(results)
 
 ##############################################################################
