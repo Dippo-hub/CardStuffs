@@ -10,6 +10,8 @@ def stripCardForSearch(name):
         trimmed = trimmed[2:]
     else:
         trimmed = ""
+    while trimmed[0] == " ":
+        trimmed = trimmed[1:]
     return trimmed.lower().replace(" ", "-").replace(",", "").replace("'", "").replace(".", "").replace(":", "").replace("!", "").replace("?", "")
 
 
@@ -71,13 +73,20 @@ class Card:
         else:
             self.is_basic_land = False
         self.amount = 1
-    def get_image_url(self):
+    def get_image_url(self, face='front'):
         try:
-
+            if face == 'front':
+                face = 0
+            elif face == 'back':
+                face = 1
             response = requests.get(f"https://api.scryfall.com/cards/named?exact={self.image_search_name}")
             if response.status_code == 200:
                 data = response.json()
-                return data['image_uris']['normal']
+                # Handle double-sided cards
+                if 'card_faces' in data:
+                    return data['card_faces'][face]['image_uris']['normal']
+                else:
+                    return self.name
             else:
                 return self.name
         except Exception as e:
