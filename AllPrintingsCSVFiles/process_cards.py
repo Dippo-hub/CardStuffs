@@ -39,7 +39,7 @@ searches={"format": "Don't Care",
           "display_common": True,
           "display_uncommon": True,
           "display_rare": True,
-          "display_mythic_rare": True,
+          "display_mythic": True,
           "display_special": True,   
           "must_be_white": False,
           "must_be_blue": False,
@@ -102,36 +102,6 @@ searches={"format": "Don't Care",
           }
 onward = ""
 results = []
-## request {MUST_HAVE:----:
-#           ALLOWED_HAVE:1-1-1-1-1:
-#           NOT_ALLOWED_HAVE:----:
-#           ALLOWED_TYPES:1-1-1-1-1-1-0-0-0-0:
-#           NOT_ALLOWED_TYPES:0-0-0-0-0-0-0-0-0-0:
-#           name_filter:avatar:
-#           text1::
-#           text2::
-#           text3::
-#           text4::
-#           text5::
-#           text6::
-#           low::
-#           high::
-#           OR_TEXT:---:
-#           low_power::
-#           high_power::
-#           low_toughness::
-#           high_toughness::
-#           super_type::
-#           type::
-#           set_filter::
-#           eliminate_dups:1:
-#           english:1:
-#           mythic:1:
-#           rare:1:
-#           uncommon:1:
-#           common:1:
-#           special:1
-#           }
 
 def transform_to_request(searches):
     request = {}
@@ -257,6 +227,183 @@ def pretty_results(jeremy=list):
             else:
                 st.write(f"wtf is {doink}")
 
+def python_card_search(parm=dict):
+    if parm is None:
+        parm = {
+          "format": "Don't Care",
+          "name_contains": "",
+          "set_name_contains": "",
+          "display_no_dupes": True,
+          "display_english_only": True,
+          "display_common": True,
+          "display_uncommon": True,
+          "display_rare": True,
+          "display_mythic": True,
+          "display_special": True,   
+          "must_be_white": False,
+          "must_be_blue": False,
+          "must_be_black": False,
+          "must_be_red": False,
+          "must_be_green": False,
+          "allowed_colors_white": False,
+          "allowed_colors_blue": False,
+          "allowed_colors_black": False,
+          "allowed_colors_red": False,
+          "allowed_colors_green": False,
+          "cannot_be_white": False,
+          "cannot_be_blue": False,
+          "cannot_be_black": False,
+          "cannot_be_red": False,
+          "cannot_be_green": False,
+          "power_low": "",
+          "power_high": "",
+          "toughness_low": "",
+          "toughness_high": "",
+          "cmc_low": "",
+          "cmc_high": "",
+          "subtype": "",
+          "supertype": "",
+          "allowed_types_artifact": False,
+          "allowed_types_creature": False,
+          "allowed_types_enchantment": False,
+          "allowed_types_instant": False,
+          "allowed_types_land": False,
+          "allowed_types_planeswalker": False,
+          "allowed_types_sorcery": False,
+          "allowed_types_tribal": False,
+          "allowed_types_legendary": False,
+          "not_allowed_types_artifact": False,
+          "not_allowed_types_creature": False,
+          "not_allowed_types_enchantment": False,
+          "not_allowed_types_instant": False,
+          "not_allowed_types_land": False,
+          "not_allowed_types_planeswalker": False,
+          "not_allowed_types_sorcery": False,
+          "not_allowed_types_tribal": False,
+          "not_allowed_types_legendary": False,
+          "and1": "",
+          "and2": "",
+          "and3": "",
+          "and4": "",
+          "and5": "",
+          "and6": "",
+          "and7": "",
+          "and8": "",
+          "or1": "",
+          "or2": "",
+          "or3": "",
+          "or4": "",
+          "not1": "",
+          "not2": "",
+          "not3": "",
+          "not4": "",
+          "sort_by": "CMC"
+          }
+    results = set()
+##NAME SEARCH -- Builds initial list
+    for i in cards['name']:
+        if re.search(parm['name_contains'], i):
+            results.add(i)
+    print(f"{len(results)} after name filter.")
+##SET SEARCH
+    if parm['set_name_contains'] != "":
+        temp = set()
+        working_sets = []
+        for set_name in sets['name']:
+            if re.search(parm['set_name_contains'], set_name):
+                working_sets.append(set_map[set_name])
+        for card in results:
+            card_printings = cards.loc[cards['name'] == card, 'printings'].iloc[0]
+            if any(printing.strip() in working_sets for printing in card_printings.split(",")):
+                temp.add(card)
+        results = temp
+    print(f"{len(results)} after set filter.")
+##FORMAT SEARCH
+    if parm['format'] != "Don't Care":
+        temp = set()
+        for card in results:
+            uuid = cards.loc[cards['name'] == card, 'uuid'].iloc[0]
+            if card_legalities.loc[card_legalities['uuid'] == uuid, parm['format'].lower()].iloc[0] == "Legal":
+                temp.add(card)
+        results = temp
+        print(f"{len(results)} after format filter.")
+##RARITY SEARCH
+    temp = set()
+    for card in results:
+        card_rarity = cards.loc[cards['name'] == card, 'rarity'].iloc[0]
+        for rarity in ["common", "uncommon", "rare", "mythic", "special"]:
+            if parm[f'display_{rarity}'] and card_rarity == rarity:
+                temp.add(card)
+    results = temp
+    print(f"{len(results)} after rarity filter.")
+##MUST BE COLOR SEARCH
+    search_for_must = False
+    for color in allowed_colors:
+        if parm[f'must_be_{color.lower()}']:
+            search_for_must = True
+            break
+    if search_for_must:
+        temp = set()
+        for card in results:
+            card_color = cards.loc[cards['name'] == card, 'colorIdentity'].iloc[0].split(",") or None
+            good = 0
+            for color, code in zip(allowed_colors, color_codes):
+                #print(color, code)
+                if re.search(pattern=code, string=str(card_color)) and parm[f'must_be_{color.lower()}']:
+                    good+=1
+                if good == len(card_color):
+                    temp.add(card)
+        results = temp
+    print(f"{len(results)} after must be filter.")
+##ALLOWED COLOR SEARCH
+    search_for_allowed = False
+    for color in allowed_colors:
+        if parm[f'allowed_colors_{color.lower()}']:
+            search_for_allowed = True
+            break
+    if search_for_allowed:
+        temp = set()
+        for card in results:
+            card_color = cards.loc[cards['name'] == card, 'colorIdentity'].iloc[0].split(",") or None
+            for color, code in zip(allowed_colors, color_codes):
+                #print(color, code)
+                if re.search(pattern=code, string=str(card_color)) and parm[f'allowed_colors_{color.lower()}']:
+                    temp.add(card)
+                    break
+        results = temp
+    print(f"{len(results)} after allowed filter.")
+##NOT ALLOWED COLOR SEARCH
+    temp = set()
+    for card in results:
+        card_color = cards.loc[cards['name'] == card, 'colorIdentity'].iloc[0].split(",") or None
+        for color, code in zip(allowed_colors, color_codes):
+            #print(color, code)
+            if re.search(pattern=code, string=str(card_color)) and parm[f'cannot_be_{color.lower()}']:
+                break
+            else:
+                temp.add(card)
+    results = temp
+    print(f"{len(results)} after not allowed filter.")
+        
+
+
+
+    return results
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 text_ands = ["and1", "and2", "and3", "and4", "and5", "and6", "and7", "and8"]
@@ -264,58 +411,57 @@ text_ors = ["or1", "or2", "or3", "or4"]
 text_nots = ["not1", "not2", "not3", "not4"]
 
 ##LISTS FOR SITE CHECKBOXES##
-format_list=["Don't Care", "Alchemy", "Brawl", "Commander", "Duel Commander", "Explorer", "Frontier", "Historic", "Historic Brawl", "Legacy", "Modern", "Pauper", "Pioneer", "Standard", "Vintage"]
+format_list=["Don't Care", "Alchemy", "Brawl", "Commander", "Duel", "Explorer", "Frontier", "Historic", "Legacy", "Modern", "Pauper", "Pioneer", "Standard", "Vintage", "StandardBrawl"]
 display_list=["No dupes", "English Only", "Common", "Uncommon", "Rare", "Mythic Rare"]
 must_be=["White", "Blue", "Black", "Red", "Green"]
 allowed_colors=["White", "Blue", "Black", "Red", "Green"]
 cannot_be=["White", "Blue", "Black", "Red", "Green"]
+color_codes=["W","U","B","R","G"]
 allowed_types=["Artifact", "Creature", "Enchantment", "Instant", "Land", "Planeswalker", "Sorcery", "Tribal", "Legendary"]
 not_allowed_types=["Artifact", "Creature", "Enchantment", "Instant", "Land", "Planeswalker", "Sorcery", "Tribal", "Legendary"]
 sort_by_list=["CMC","EDH Rank","Salty","Price"]
 socket_colors = ["white", "blue", "green", "red", "black"]
 ###############################################################################
 
-def search(searches):
-    text_ands = [searches["and1"], searches["and2"], searches["and3"], searches["and4"], searches["and5"], searches["and6"], searches["and7"], searches["and8"]]
-    text_ors = [searches["or1"], searches["or2"], searches["or3"], searches["or4"]]
-    text_nots = [searches["not1"], searches["not2"], searches["not3"], searches["not4"]]
-    
-ready = True
-if not ready:
-    with st.status(label="Preparing...", expanded=True, state="running") as status:
-        card_foreign_data = pd.read_csv('AllPrintingsCSVFiles/cardForeignData.csv')
-        st.write("Loading card identifiers...")
-        card_identifiers = pd.read_csv('AllPrintingsCSVFiles/cardIdentifiers.csv')
-        st.write("Loading card legalities...")
-        card_legalities = pd.read_csv('AllPrintingsCSVFiles/cardLegalities.csv')
-        st.write("Loading card prices...")
-        card_prices = pd.read_csv('AllPrintingsCSVFiles/cardPrices.csv')
-        st.write("Loading card purchase URLs...")
-        card_purchase_uris = pd.read_csv('AllPrintingsCSVFiles/cardPurchaseUrls.csv')
-        st.write("Loading card rulings...")
-        card_rulings = pd.read_csv('AllPrintingsCSVFiles/cardRulings.csv')
-        st.write("Loading cards...")
-        cards = pd.read_csv('AllPrintingsCSVFiles/cards.csv', low_memory=False)
-        st.write("Loading set booster contents...")
-        set_booster_contents = pd.read_csv('AllPrintingsCSVFiles/setBoosterContents.csv')
-        st.write("Loading set booster content weights...")
-        set_booster_content_weights = pd.read_csv('AllPrintingsCSVFiles/setBoosterContentWeights.csv')
-        st.write("Loading set booster sheets...")
-        set_booster_sheets = pd.read_csv('AllPrintingsCSVFiles/setBoosterSheets.csv')
-        st.write("Loading sets...")
-        sets = pd.read_csv('AllPrintingsCSVFiles/sets.csv')
-        st.write("Loading set translations...")
-        set_translations = pd.read_csv('AllPrintingsCSVFiles/setTranslations.csv')
-        st.write("Loading token identifiers...")
-        token_identifiers = pd.read_csv('AllPrintingsCSVFiles/tokenIdentifiers.csv')
-        st.write("Loading tokens...")
-        tokens = pd.read_csv('AllPrintingsCSVFiles/tokens.csv')
-        ready = True
-        status.update(label="Ready!", state="complete")
-
+@st.cache_data
+def load_csvs():
+        global set_map
+        #global card_legalities, card_prices, cards, sets, set_translations, tokens
+        with st.status(label="Preparing...", expanded=True, state="running") as status:
+            #card_foreign_data = pd.read_csv('AllPrintingsCSVFiles/cardForeignData.csv')
+            #st.write("Loading card identifiers...")
+            #card_identifiers = pd.read_csv('AllPrintingsCSVFiles/cardIdentifiers.csv')
+            st.write("Loading card legalities...")
+            card_legalities = pd.read_csv('AllPrintingsCSVFiles/cardLegalities.csv')
+            st.write("Loading card prices...")
+            card_prices = pd.read_csv('AllPrintingsCSVFiles/cardPrices.csv')
+            #st.write("Loading card purchase URLs...")
+            #card_purchase_uris = pd.read_csv('AllPrintingsCSVFiles/cardPurchaseUrls.csv')
+            #st.write("Loading card rulings...")
+            #card_rulings = pd.read_csv('AllPrintingsCSVFiles/cardRulings.csv')
+            st.write("Loading cards...")
+            cards = pd.read_csv('AllPrintingsCSVFiles/cards.csv', low_memory=False)
+            #st.write("Loading set booster contents...")
+            #set_booster_contents = pd.read_csv('AllPrintingsCSVFiles/setBoosterContents.csv')
+            #st.write("Loading set booster content weights...")
+            #set_booster_content_weights = pd.read_csv('AllPrintingsCSVFiles/setBoosterContentWeights.csv')
+            #st.write("Loading set booster sheets...")
+            #set_booster_sheets = pd.read_csv('AllPrintingsCSVFiles/setBoosterSheets.csv')
+            st.write("Loading sets...")
+            sets = pd.read_csv('AllPrintingsCSVFiles/sets.csv')
+            st.write("Loading set translations...")
+            set_translations = pd.read_csv('AllPrintingsCSVFiles/setTranslations.csv')
+            #st.write("Loading token identifiers...")
+            #token_identifiers = pd.read_csv('AllPrintingsCSVFiles/tokenIdentifiers.csv')
+            st.write("Loading tokens...")
+            tokens = pd.read_csv('AllPrintingsCSVFiles/tokens.csv')
+            status.update(label="Ready!", state="complete")
+            return card_legalities, card_prices, cards, sets, set_translations, tokens
 
 st.title("MTG Card Search")
-
+card_legalities, card_prices, cards, sets, set_translations, tokens = load_csvs()
+set_map = {name: code for code, name in zip(sets['code'], sets['name'])}
+st.dataframe(cards.head(5))
 ##Format selection
 st.selectbox("Format", format_list, key="format")
 ##Name and set
@@ -330,7 +476,7 @@ with col3:    st.checkbox("Common", key="display_common", value=True)
 with col4:    st.checkbox("Uncommon", key="display_uncommon", value=True)
 with col5:    st.checkbox("Rare", key="display_rare", value=True)
 col6, col7 = st.columns(2)
-with col6:    st.checkbox("Mythic", key="display_mythic_rare", value=True)
+with col6:    st.checkbox("Mythic", key="display_mythic", value=True)
 with col7:    st.checkbox("Special", key="display_special", value=True)
 
 ##Color selection
@@ -407,46 +553,54 @@ with cols[3]:    st.checkbox("Legendary", key="not_allowed_types_legendary")
 ##Text Contains
 st.subheader("Text Ands:")
 ands = st.columns(4)
-with ands[0]:    st.text_input("", key="and1")
-with ands[1]:    st.text_input("", key="and2")
-with ands[2]:    st.text_input("", key="and3")
-with ands[3]:    st.text_input("", key="and4")
+with ands[0]:    st.text_input("", key="and1", label_visibility="hidden")
+with ands[1]:    st.text_input("", key="and2", label_visibility="hidden")
+with ands[2]:    st.text_input("", key="and3", label_visibility="hidden")
+with ands[3]:    st.text_input("", key="and4", label_visibility="hidden")
 ands = st.columns(4)
-with ands[0]:    st.text_input("", key="and5")
-with ands[1]:    st.text_input("", key="and6")
-with ands[2]:    st.text_input("", key="and7")
-with ands[3]:    st.text_input("", key="and8")
+with ands[0]:    st.text_input("", key="and5", label_visibility="hidden")
+with ands[1]:    st.text_input("", key="and6", label_visibility="hidden")
+with ands[2]:    st.text_input("", key="and7", label_visibility="hidden")
+with ands[3]:    st.text_input("", key="and8", label_visibility="hidden")
 
 st.subheader("Text Ors:")
 ors = st.columns(4)
-with ors[0]:    st.text_input("", key="or1")
-with ors[1]:    st.text_input("", key="or2")
-with ors[2]:    st.text_input("", key="or3")
-with ors[3]:    st.text_input("", key="or4")
+with ors[0]:    st.text_input("", key="or1", label_visibility="hidden")
+with ors[1]:    st.text_input("", key="or2", label_visibility="hidden")
+with ors[2]:    st.text_input("", key="or3", label_visibility="hidden")
+with ors[3]:    st.text_input("", key="or4", label_visibility="hidden")
 
 st.subheader("Text Nots:")
 nots = st.columns(4)
-with nots[0]:    st.text_input("", key="not1")
-with nots[1]:    st.text_input("", key="not2")
-with nots[2]:    st.text_input("", key="not3")
-with nots[3]:    st.text_input("", key="not4")
+with nots[0]:    st.text_input("", key="not1", label_visibility="hidden")
+with nots[1]:    st.text_input("", key="not2", label_visibility="hidden")
+with nots[2]:    st.text_input("", key="not3", label_visibility="hidden")
+with nots[3]:    st.text_input("", key="not4", label_visibility="hidden")
 
 ##Sort by
 st.selectbox("Sort by", sort_by_list, key="sort_by")
-
+st.selectbox("Engine Language", options=["Perl", "Python"], key="platform")
 ##Search
-st.button("Search", key="search")
+st.sidebar.button("Search", key="search")
+st.sidebar.button("Reload", key="Reload")
+if st.session_state.Reload:
+    st.cache_data.clear()
 if st.session_state.search:
     with st.sidebar.status(label = "Thinking...", state="running") as status:
             for key in searches.keys():
-                searches[key] = st.session_state[key]
-            send = transform_to_request(searches)
-            start = "request:"
-            onward = "".join(f"{key}:{send[key]}:" for key in send.keys())
-            go_forth = start + onward + "\n"
-            #st.write(go_forth)
-            results = send_request(go_forth)
-            status.update(label="Stuff!", state="complete")
+                if key != "platform":
+                    searches[key] = st.session_state[key]
+            if st.session_state.platform == "Perl":
+                send = transform_to_request(searches)
+                start = "request:"
+                onward = "".join(f"{key}:{send[key]}:" for key in send.keys())
+                go_forth = start + onward + "\n"
+                #st.write(go_forth)
+                results = send_request(go_forth)
+                status.update(label="Stuff!", state="complete")
+            elif st.session_state.platform == "Python":
+                st.write(python_card_search(searches))
+            
 
 ##Display results
 with st.sidebar:    
