@@ -135,7 +135,7 @@ def transform_to_request(searches):
     request["set_filter"] = searches["set_name_contains"]
     request["eliminate_dups"] = "1" if searches["display_no_dupes"] else "0"
     request["english"] = "1" if searches["display_english_only"] else "0"
-    request["mythic"] = "1" if searches["display_mythic_rare"] else "0"
+    request["mythic"] = "1" if searches["display_mythic"] else "0"
     request["rare"] = "1" if searches["display_rare"] else "0"
     request["uncommon"] = "1" if searches["display_uncommon"] else "0"
     request["common"] = "1" if searches["display_common"] else "0"
@@ -308,10 +308,16 @@ def python_card_search(parm=dict):
 ##SET SEARCH
     if parm['set_name_contains'] != "":
         temp = set()
+        temp_2 = []
         working_sets = []
         for set_name in sets['name']:
             if re.search(parm['set_name_contains'], set_name):
                 working_sets.append(set_map[set_name])
+        if 'PMOA' in working_sets:
+            for thing in working_sets:
+                if thing != 'PMOA':
+                    temp_2.append(thing)
+            working_sets = temp_2
         for card in results:
             card_printings = cards.loc[cards['name'] == card, 'printings'].iloc[0]
             if any(printing.strip() in working_sets for printing in card_printings.split(",")):
@@ -345,7 +351,7 @@ def python_card_search(parm=dict):
     if search_for_must:
         temp = set()
         for card in results:
-            card_color = cards.loc[cards['name'] == card, 'colorIdentity'].iloc[0].split(",") or None
+            card_color = str(cards.loc[cards['name'] == card, 'colorIdentity'].iloc[0]).split(",") or None
             good = 0
             for color, code in zip(allowed_colors, color_codes):
                 #print(color, code)
@@ -364,7 +370,7 @@ def python_card_search(parm=dict):
     if search_for_allowed:
         temp = set()
         for card in results:
-            card_color = cards.loc[cards['name'] == card, 'colorIdentity'].iloc[0].split(",") or None
+            card_color = str(cards.loc[cards['name'] == card, 'colorIdentity'].iloc[0]).split(",") or None
             for color, code in zip(allowed_colors, color_codes):
                 #print(color, code)
                 if re.search(pattern=code, string=str(card_color)) and parm[f'allowed_colors_{color.lower()}']:
@@ -375,15 +381,72 @@ def python_card_search(parm=dict):
 ##NOT ALLOWED COLOR SEARCH
     temp = set()
     for card in results:
-        card_color = cards.loc[cards['name'] == card, 'colorIdentity'].iloc[0].split(",") or None
+        bad = False
+        card_color = str(cards.loc[cards['name'] == card, 'colorIdentity'].iloc[0]).split(",") or None
+        #print(card_color)
         for color, code in zip(allowed_colors, color_codes):
             #print(color, code)
-            if re.search(pattern=code, string=str(card_color)) and parm[f'cannot_be_{color.lower()}']:
+            if parm[f'cannot_be_{color.lower()}'] and re.search(code, str(card_color)):
+                bad = True
                 break
             else:
-                temp.add(card)
+                continue
+        if not bad:
+            temp.add(card)
     results = temp
     print(f"{len(results)} after not allowed filter.")
+##POWER SEARCH
+    if parm['power_low'] != '' and parm['power_high'] != '':
+        if parm['power_low'] == '':
+            parm['power_low'] = 0
+        if parm['power_high'] == '':
+            parm['power_high'] = 308
+        temp = set()
+        for card in results:
+            card_type = cards.loc[cards['name'] == card, 'types'].iloc[0]
+            if "Creature" in card_type:
+                creature_power = cards.loc[cards['name'] == card, 'power'].iloc[0]
+                if int(creature_power) in range(int(parm['power_low']), int(parm['power_high'])+1):
+                    temp.add(card)
+        results = temp
+    print(f"{len(results)} after power filter.")
+##TOUGHNESS SEARCH
+    if parm['toughness_low'] != '' and parm['toughness_high'] != '':
+        if parm['toughness_low'] == '':
+            parm['toughness_low'] = 0
+        if parm['toughness_high'] == '':
+            parm['toughness_high'] = 308
+        temp = set()
+        for card in results:
+            card_type = cards.loc[cards['name'] == card, 'types'].iloc[0]
+            if "Creature" in card_type:
+                creature_toughness = cards.loc[cards['name'] == card, 'toughness'].iloc[0]
+                if int(creature_toughness) in range(int(parm['toughness_low']), int(parm['toughness_high'])+1):
+                    temp.add(card)
+        results = temp
+    print(f"{len(results)} after toughness filter.")
+##MANA VALUE SEARCH
+    temp = set()
+    if parm['cmc_low'] == '':
+        parm['cmc_low']=0
+    if parm['cmc_high'] == '':
+        parm['cmc_high'] = 308
+    for card in results:
+        cmc = int(cards.loc[cards['name'] == card, 'manaValue'].iloc[0])
+        if cmc in range(int(parm['cmc_low']), int(parm['cmc_high'])+1):
+            temp.add(card)
+    if len(temp) > 0:
+        results = temp
+    print(f'{len(results)} after cmc filter.')
+##ALLOWED TYPES SEARCH
+    temp = set()
+    for card in results:
+        card_type = cards.loc[cards['name'] == card, 'types'].iloc[0]
+        bad = False
+        for type in allowed_types:
+            type = type.lower()
+        
+
         
 
 
@@ -425,48 +488,35 @@ socket_colors = ["white", "blue", "green", "red", "black"]
 
 @st.cache_data
 def load_csvs():
-        global set_map
-        #global card_legalities, card_prices, cards, sets, set_translations, tokens
         with st.status(label="Preparing...", expanded=True, state="running") as status:
-            #card_foreign_data = pd.read_csv('AllPrintingsCSVFiles/cardForeignData.csv')
-            #st.write("Loading card identifiers...")
-            #card_identifiers = pd.read_csv('AllPrintingsCSVFiles/cardIdentifiers.csv')
+            
             st.write("Loading card legalities...")
             card_legalities = pd.read_csv('AllPrintingsCSVFiles/cardLegalities.csv')
+            
             st.write("Loading card prices...")
             card_prices = pd.read_csv('AllPrintingsCSVFiles/cardPrices.csv')
-            #st.write("Loading card purchase URLs...")
-            #card_purchase_uris = pd.read_csv('AllPrintingsCSVFiles/cardPurchaseUrls.csv')
-            #st.write("Loading card rulings...")
-            #card_rulings = pd.read_csv('AllPrintingsCSVFiles/cardRulings.csv')
+            
             st.write("Loading cards...")
-            cards = pd.read_csv('AllPrintingsCSVFiles/cards.csv', low_memory=False)
-            #st.write("Loading set booster contents...")
-            #set_booster_contents = pd.read_csv('AllPrintingsCSVFiles/setBoosterContents.csv')
-            #st.write("Loading set booster content weights...")
-            #set_booster_content_weights = pd.read_csv('AllPrintingsCSVFiles/setBoosterContentWeights.csv')
-            #st.write("Loading set booster sheets...")
-            #set_booster_sheets = pd.read_csv('AllPrintingsCSVFiles/setBoosterSheets.csv')
+            cards = pd.read_csv('AllPrintingsCSVFiles/cards.csv', low_memory=False, usecols=['name', 'printings', 'colorIdentity', 'colors', 'edhrecRank', 'edhrecSaltiness', 'manaCost', 'manaValue', 'power', 'rarity', 'setCode', 'subtypes', 'supertypes', 'toughness', 'type', 'types', 'uuid'])
+            
             st.write("Loading sets...")
-            sets = pd.read_csv('AllPrintingsCSVFiles/sets.csv')
-            st.write("Loading set translations...")
-            set_translations = pd.read_csv('AllPrintingsCSVFiles/setTranslations.csv')
-            #st.write("Loading token identifiers...")
-            #token_identifiers = pd.read_csv('AllPrintingsCSVFiles/tokenIdentifiers.csv')
-            st.write("Loading tokens...")
-            tokens = pd.read_csv('AllPrintingsCSVFiles/tokens.csv')
+            sets = pd.read_csv('AllPrintingsCSVFiles/sets.csv', usecols=['code', 'name'])
+
             status.update(label="Ready!", state="complete")
-            return card_legalities, card_prices, cards, sets, set_translations, tokens
+            return card_legalities, card_prices, cards, sets
 
 st.title("MTG Card Search")
-card_legalities, card_prices, cards, sets, set_translations, tokens = load_csvs()
+card_legalities, card_prices, cards, sets = load_csvs()
 set_map = {name: code for code, name in zip(sets['code'], sets['name'])}
 st.dataframe(cards.head(5))
+
 ##Format selection
 st.selectbox("Format", format_list, key="format")
 ##Name and set
 st.text_input("Card Name Contains", key="name_contains")
 st.text_input("Set Name Contains", key="set_name_contains")
+
+##Display list and rarities
 st.subheader("Display list")
 col1, col2 = st.columns(2)
 with col1:    st.checkbox("No dupes", key="display_no_dupes", value=True)
@@ -494,7 +544,7 @@ with col12:    st.checkbox("White", key="allowed_colors_white")
 with col13:    st.checkbox("Blue", key="allowed_colors_blue")
 with col14:    st.checkbox("Black", key="allowed_colors_black")
 with col15:    st.checkbox("Red", key="allowed_colors_red")
-with col16:   st.checkbox("Green", key="allowed_colors_green")
+with col16:    st.checkbox("Green", key="allowed_colors_green")
 
 st.subheader("Cannot be:")
 col17, col18, col19, col20, col21 = st.columns(5)
@@ -600,6 +650,7 @@ if st.session_state.search:
                 status.update(label="Stuff!", state="complete")
             elif st.session_state.platform == "Python":
                 st.write(python_card_search(searches))
+                status.update(label="Done!", state="complete")
             
 
 ##Display results
