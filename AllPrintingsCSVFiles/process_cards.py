@@ -440,11 +440,39 @@ def python_card_search(parm=dict):
     print(f'{len(results)} after cmc filter.')
 ##ALLOWED TYPES SEARCH
     temp = set()
+    types_allowed = [thing for thing in allowed_types if parm[f'allowed_types_{thing.lower()}']]
+    print(types_allowed)
     for card in results:
-        card_type = cards.loc[cards['name'] == card, 'types'].iloc[0]
-        bad = False
-        for type in allowed_types:
-            type = type.lower()
+        # 1. Get the front and back names safely
+        if re.search("//", card):
+            parts = card.split(" // ")
+            front_name = parts[0]
+            back_name = parts[1] if len(parts) > 1 else None
+
+        # 2. Get front types
+            front_match = cards.loc[cards['faceName'] == front_name, 'type']
+            card_types_front = front_match.iloc[0] if not front_match.empty else ""
+
+        # 3. Get back types ONLY if it's a split card
+            card_types_back = ""
+            if back_name:
+                back_match = cards.loc[cards['faceName'] == back_name, 'type']
+                card_types_back = back_match.iloc[0] if not back_match.empty else ""
+
+# 4. Combine and check
+            all_types = (card_types_front + " " + card_types_back).split()
+            print(f'{front_name}, {back_name} : {all_types}')
+            if any(t in types_allowed for t in all_types):
+                temp.add(card)
+        else:
+           card_types = cards.loc[cards['name'] == card, 'type'].iloc[0].split()
+           print(f'{card} : {card_types}')
+           if any(t in types_allowed for t in card_types):
+               temp.add(card)
+
+    results = temp
+    print(f"{len(results)} after allowed types filter.")
+        
         
 
         
@@ -497,7 +525,7 @@ def load_csvs():
             card_prices = pd.read_csv('AllPrintingsCSVFiles/cardPrices.csv')
             
             st.write("Loading cards...")
-            cards = pd.read_csv('AllPrintingsCSVFiles/cards.csv', low_memory=False, usecols=['name', 'printings', 'colorIdentity', 'colors', 'edhrecRank', 'edhrecSaltiness', 'manaCost', 'manaValue', 'power', 'rarity', 'setCode', 'subtypes', 'supertypes', 'toughness', 'type', 'types', 'uuid'])
+            cards = pd.read_csv('AllPrintingsCSVFiles/cards.csv', low_memory=False, usecols=['name', 'faceName', 'printings', 'colorIdentity', 'colors', 'edhrecRank', 'edhrecSaltiness', 'manaCost', 'manaValue', 'power', 'rarity', 'setCode', 'subtypes', 'supertypes', 'toughness', 'type', 'types', 'uuid'])
             
             st.write("Loading sets...")
             sets = pd.read_csv('AllPrintingsCSVFiles/sets.csv', usecols=['code', 'name'])
@@ -513,126 +541,126 @@ st.dataframe(cards.head(5))
 ##Format selection
 st.selectbox("Format", format_list, key="format")
 ##Name and set
-st.text_input("Card Name Contains", key="name_contains")
-st.text_input("Set Name Contains", key="set_name_contains")
+st.text_input(label="Card Name Contains", key="name_contains")
+st.text_input(label="Set Name Contains", key="set_name_contains")
 
 ##Display list and rarities
 st.subheader("Display list")
 col1, col2 = st.columns(2)
-with col1:    st.checkbox("No dupes", key="display_no_dupes", value=True)
-with col2:    st.checkbox("English Only", key="display_english_only", value=True)
+with col1:    st.checkbox(label="No dupes", key="display_no_dupes", value=True)
+with col2:    st.checkbox(label="English Only", key="display_english_only", value=True)
 col3, col4, col5 = st.columns(3)
-with col3:    st.checkbox("Common", key="display_common", value=True)
-with col4:    st.checkbox("Uncommon", key="display_uncommon", value=True)
-with col5:    st.checkbox("Rare", key="display_rare", value=True)
+with col3:    st.checkbox(label="Common", key="display_common", value=True)
+with col4:    st.checkbox(label="Uncommon", key="display_uncommon", value=True)
+with col5:    st.checkbox(label="Rare", key="display_rare", value=True)
 col6, col7 = st.columns(2)
-with col6:    st.checkbox("Mythic", key="display_mythic", value=True)
-with col7:    st.checkbox("Special", key="display_special", value=True)
+with col6:    st.checkbox(label="Mythic", key="display_mythic", value=True)
+with col7:    st.checkbox(label="Special", key="display_special", value=True)
 
 ##Color selection
 st.subheader("Must be:")
 col7, col8, col9, col10, col11 = st.columns(5)
-with col7:    st.checkbox("White", key="must_be_white")
-with col8:    st.checkbox("Blue", key="must_be_blue")
-with col9:    st.checkbox("Black", key="must_be_black")
-with col10:   st.checkbox("Red", key="must_be_red")
-with col11:   st.checkbox("Green", key="must_be_green")
+with col7:    st.checkbox(label="White", key="must_be_white")
+with col8:    st.checkbox(label="Blue", key="must_be_blue")
+with col9:    st.checkbox(label="Black", key="must_be_black")
+with col10:   st.checkbox(label="Red", key="must_be_red")
+with col11:   st.checkbox(label="Green", key="must_be_green")
 
 st.subheader("Allowed Colors:")
 col12, col13, col14, col15, col16 = st.columns(5)
-with col12:    st.checkbox("White", key="allowed_colors_white")  
-with col13:    st.checkbox("Blue", key="allowed_colors_blue")
-with col14:    st.checkbox("Black", key="allowed_colors_black")
-with col15:    st.checkbox("Red", key="allowed_colors_red")
-with col16:    st.checkbox("Green", key="allowed_colors_green")
+with col12:    st.checkbox(label="White", key="allowed_colors_white")  
+with col13:    st.checkbox(label="Blue", key="allowed_colors_blue")
+with col14:    st.checkbox(label="Black", key="allowed_colors_black")
+with col15:    st.checkbox(label="Red", key="allowed_colors_red")
+with col16:    st.checkbox(label="Green", key="allowed_colors_green")
 
 st.subheader("Cannot be:")
 col17, col18, col19, col20, col21 = st.columns(5)
-with col17:    st.checkbox("White", key="cannot_be_white")
-with col18:    st.checkbox("Blue", key="cannot_be_blue")
-with col19:    st.checkbox("Black", key="cannot_be_black")
-with col20:    st.checkbox("Red", key="cannot_be_red")
-with col21:    st.checkbox("Green", key="cannot_be_green")
+with col17:    st.checkbox(label="White", key="cannot_be_white")
+with col18:    st.checkbox(label="Blue", key="cannot_be_blue")
+with col19:    st.checkbox(label="Black", key="cannot_be_black")
+with col20:    st.checkbox(label="Red", key="cannot_be_red")
+with col21:    st.checkbox(label="Green", key="cannot_be_green")
 
 ##Power range
 col1, sign, col2 = st.columns(3)
-with col1:    st.text_input("Power Greater Than", key="power_low")
-with col2:    st.text_input("Power Less Than", key="power_high")
+with col1:    st.text_input(label="Power Greater Than", key="power_low")
+with col2:    st.text_input(label="Power Less Than", key="power_high")
 
 ##Toughness range
 col3, space, col4 = st.columns(3)
-with col3:    st.text_input("Toughness Greater Than", key="toughness_low")
-with col4:    st.text_input("Toughness Less Than", key="toughness_high")
+with col3:    st.text_input(label="Toughness Greater Than", key="toughness_low")
+with col4:    st.text_input(label="Toughness Less Than", key="toughness_high")
 
 ##CMC range
 col5, space2, col6 = st.columns(3)
-with col5:    st.text_input("CMC Greater Than", key="cmc_low")
-with col6:    st.text_input("CMC Less Than", key="cmc_high")
+with col5:    st.text_input(label="CMC Greater Than", key="cmc_low")
+with col6:    st.text_input(label="CMC Less Than", key="cmc_high")
 
 ##Subtype/Supertype selection
 col1, col3 = st.columns(2)
-with col1: st.text_input("Subtype:", key="subtype")
-with col3: st.text_input("Supertype:", key="supertype")
+with col1: st.text_input(label="Subtype:", key="subtype")
+with col3: st.text_input(label="Supertype:", key="supertype")
 ##Type selection
 st.subheader("Allowed Types:")
 cols = st.columns(5)
-with cols[0]:    st.checkbox("Artifact", key="allowed_types_artifact")
-with cols[1]:    st.checkbox("Creature", key="allowed_types_creature")
-with cols[2]:    st.checkbox("Enchantment", key="allowed_types_enchantment")
-with cols[3]:    st.checkbox("Instant", key="allowed_types_instant")
-with cols[4]:    st.checkbox("Land", key="allowed_types_land")
+with cols[0]:    st.checkbox(label="Artifact", key="allowed_types_artifact")
+with cols[1]:    st.checkbox(label="Creature", key="allowed_types_creature")
+with cols[2]:    st.checkbox(label="Enchantment", key="allowed_types_enchantment")
+with cols[3]:    st.checkbox(label="Instant", key="allowed_types_instant")
+with cols[4]:    st.checkbox(label="Land", key="allowed_types_land")
 cols = st.columns(4)
-with cols[0]:    st.checkbox("Planeswalker", key="allowed_types_planeswalker")
-with cols[1]:    st.checkbox("Sorcery", key="allowed_types_sorcery")
-with cols[2]:    st.checkbox("Tribal", key="allowed_types_tribal")
-with cols[3]:    st.checkbox("Legendary", key="allowed_types_legendary")
+with cols[0]:    st.checkbox(label="Planeswalker", key="allowed_types_planeswalker")
+with cols[1]:    st.checkbox(label="Sorcery", key="allowed_types_sorcery")
+with cols[2]:    st.checkbox(label="Tribal", key="allowed_types_tribal")
+with cols[3]:    st.checkbox(label="Legendary", key="allowed_types_legendary")
 
 st.subheader("Not Allowed Types:")
 cols = st.columns(5)
-with cols[0]:    st.checkbox("Artifact", key="not_allowed_types_artifact")
-with cols[1]:    st.checkbox("Creature", key="not_allowed_types_creature")
-with cols[2]:    st.checkbox("Enchantment", key="not_allowed_types_enchantment")
-with cols[3]:    st.checkbox("Instant", key="not_allowed_types_instant")
-with cols[4]:    st.checkbox("Land", key="not_allowed_types_land")
+with cols[0]:    st.checkbox(label="Artifact", key="not_allowed_types_artifact")
+with cols[1]:    st.checkbox(label="Creature", key="not_allowed_types_creature")
+with cols[2]:    st.checkbox(label="Enchantment", key="not_allowed_types_enchantment")
+with cols[3]:    st.checkbox(label="Instant", key="not_allowed_types_instant")
+with cols[4]:    st.checkbox(label="Land", key="not_allowed_types_land")
 cols = st.columns(4)
-with cols[0]:    st.checkbox("Planeswalker", key="not_allowed_types_planeswalker")
-with cols[1]:    st.checkbox("Sorcery", key="not_allowed_types_sorcery")
-with cols[2]:    st.checkbox("Tribal", key="not_allowed_types_tribal")
-with cols[3]:    st.checkbox("Legendary", key="not_allowed_types_legendary")
+with cols[0]:    st.checkbox(label="Planeswalker", key="not_allowed_types_planeswalker")
+with cols[1]:    st.checkbox(label="Sorcery", key="not_allowed_types_sorcery")
+with cols[2]:    st.checkbox(label="Tribal", key="not_allowed_types_tribal")
+with cols[3]:    st.checkbox(label="Legendary", key="not_allowed_types_legendary")
 
 ##Text Contains
 st.subheader("Text Ands:")
 ands = st.columns(4)
-with ands[0]:    st.text_input("", key="and1", label_visibility="hidden")
-with ands[1]:    st.text_input("", key="and2", label_visibility="hidden")
-with ands[2]:    st.text_input("", key="and3", label_visibility="hidden")
-with ands[3]:    st.text_input("", key="and4", label_visibility="hidden")
+with ands[0]:    st.text_input(label="and1", key="and1", label_visibility="hidden")
+with ands[1]:    st.text_input(label="and2", key="and2", label_visibility="hidden")
+with ands[2]:    st.text_input(label="and3", key="and3", label_visibility="hidden")
+with ands[3]:    st.text_input(label="and4", key="and4", label_visibility="hidden")
 ands = st.columns(4)
-with ands[0]:    st.text_input("", key="and5", label_visibility="hidden")
-with ands[1]:    st.text_input("", key="and6", label_visibility="hidden")
-with ands[2]:    st.text_input("", key="and7", label_visibility="hidden")
-with ands[3]:    st.text_input("", key="and8", label_visibility="hidden")
+with ands[0]:    st.text_input(label="and5", key="and5", label_visibility="hidden")
+with ands[1]:    st.text_input(label="and6", key="and6", label_visibility="hidden")
+with ands[2]:    st.text_input(label="and7", key="and7", label_visibility="hidden")
+with ands[3]:    st.text_input(label="and8", key="and8", label_visibility="hidden")
 
 st.subheader("Text Ors:")
 ors = st.columns(4)
-with ors[0]:    st.text_input("", key="or1", label_visibility="hidden")
-with ors[1]:    st.text_input("", key="or2", label_visibility="hidden")
-with ors[2]:    st.text_input("", key="or3", label_visibility="hidden")
-with ors[3]:    st.text_input("", key="or4", label_visibility="hidden")
+with ors[0]:    st.text_input(label="or1", key="or1", label_visibility="hidden")
+with ors[1]:    st.text_input(label="or2", key="or2", label_visibility="hidden")
+with ors[2]:    st.text_input(label="or3", key="or3", label_visibility="hidden")
+with ors[3]:    st.text_input(label="or4", key="or4", label_visibility="hidden")
 
 st.subheader("Text Nots:")
 nots = st.columns(4)
-with nots[0]:    st.text_input("", key="not1", label_visibility="hidden")
-with nots[1]:    st.text_input("", key="not2", label_visibility="hidden")
-with nots[2]:    st.text_input("", key="not3", label_visibility="hidden")
-with nots[3]:    st.text_input("", key="not4", label_visibility="hidden")
+with nots[0]:    st.text_input(label="not1", key="not1", label_visibility="hidden")
+with nots[1]:    st.text_input(label="not2", key="not2", label_visibility="hidden")
+with nots[2]:    st.text_input(label="not3", key="not3", label_visibility="hidden")
+with nots[3]:    st.text_input(label="not4", key="not4", label_visibility="hidden")
 
 ##Sort by
-st.selectbox("Sort by", sort_by_list, key="sort_by")
-st.selectbox("Engine Language", options=["Perl", "Python"], key="platform")
+st.selectbox(label="Sort by", options=sort_by_list, key="sort_by")
+st.selectbox(label="Engine Language", options=["Perl", "Python"], key="platform")
 ##Search
-st.sidebar.button("Search", key="search")
-st.sidebar.button("Reload", key="Reload")
+st.sidebar.button(label="Search", key="search")
+st.sidebar.button(label="Reload", key="Reload")
 if st.session_state.Reload:
     st.cache_data.clear()
 if st.session_state.search:
