@@ -438,38 +438,89 @@ def python_card_search(parm=dict):
     if len(temp) > 0:
         results = temp
     print(f'{len(results)} after cmc filter.')
+##SUBTYPE SEARCH
+    if parm['subtype'] != "":
+        temp = set()
+        for card in results:
+            layout = cards.loc[cards['name'] == card, 'layout'].iloc[0]
+            #print(layout)
+            if layout in ['transform', 'modal_dfc']:
+                parts = card.split(" // ")
+                front_name = parts[0]
+                back_name = parts[1] if len(parts) > 1 else None
+
+        # 2. Get front types
+                front_match = cards.loc[cards['faceName'] == front_name, 'subtypes']
+                card_types_front = front_match.iloc[0] if not front_match.empty else ""
+
+        # 3. Get back types ONLY if it's a split card
+                card_types_back = ""
+                if back_name:
+                    back_match = cards.loc[cards['faceName'] == back_name, 'subtypes']
+                    card_types_back = back_match.iloc[0] if not back_match.empty else ""
+
+        # 4. Combine and check
+                all_types = (card_types_front.lower() + " " + card_types_back.lower()).split()
+                #print(f'{front_name}, {back_name} : {all_types}')
+                if re.search(parm['subtype'].lower(), str(all_types)):
+                    temp.add(card)
+        results = temp
+    print(f'{len(results)} after subtype filter')
+##SUPERTYPE SEARCH
+    if parm['supertype'] != "":
+        temp = set()
+        for card in results:
+            layout = cards.loc[cards['name'] == card, 'layout'].iloc[0]
+            #print(layout)
+            if layout in ['transform', 'modal_dfc']:
+                parts = card.split(" // ")
+                front_name = parts[0]
+                back_name = parts[1] if len(parts) > 1 else None
+
+        # 2. Get front types
+                front_match = cards.loc[cards['faceName'] == front_name, 'supertypes'] if cards.loc[cards['faceName'] == front_name, 'supertypes'] is not None else None
+                card_types_front = front_match.iloc[0] if not front_match.empty else ""
+
+        # 3. Get back types ONLY if it's a split card
+                card_types_back = ""
+                if back_name:
+                    back_match = cards.loc[cards['faceName'] == back_name, 'supertypes']
+                    card_types_back = back_match.iloc[0] if not back_match.empty else ""
+
+        # 4. Combine and check
+                all_types = (str(card_types_front).lower() + " " + card_types_back.lower()).split()
+                #print(f'{front_name}, {back_name} : {all_types}')
+                if re.search(parm['subtype'].lower(), str(all_types)):
+                    temp.add(card)
+        results = temp
+    print(f'{len(results)} after supertype filter')
 ##ALLOWED TYPES SEARCH
     temp = set()
     types_allowed = [thing for thing in allowed_types if parm[f'allowed_types_{thing.lower()}']]
-    print(types_allowed)
+    #print(types_allowed)
     for card in results:
-        # 1. Get the front and back names safely
-        if re.search("//", card):
-            parts = card.split(" // ")
-            front_name = parts[0]
-            back_name = parts[1] if len(parts) > 1 else None
+            layout = cards.loc[cards['name'] == card, 'layout'].iloc[0]
+            #print(layout)
+            if layout in ['transform', 'modal_dfc']:
+                parts = card.split(" // ")
+                front_name = parts[0]
+                back_name = parts[1] if len(parts) > 1 else None
 
         # 2. Get front types
-            front_match = cards.loc[cards['faceName'] == front_name, 'type']
-            card_types_front = front_match.iloc[0] if not front_match.empty else ""
+                front_match = cards.loc[cards['faceName'] == front_name, 'type']
+                card_types_front = front_match.iloc[0] if not front_match.empty else ""
 
         # 3. Get back types ONLY if it's a split card
-            card_types_back = ""
-            if back_name:
-                back_match = cards.loc[cards['faceName'] == back_name, 'type']
-                card_types_back = back_match.iloc[0] if not back_match.empty else ""
+                card_types_back = ""
+                if back_name:
+                    back_match = cards.loc[cards['faceName'] == back_name, 'type']
+                    card_types_back = back_match.iloc[0] if not back_match.empty else ""
 
-# 4. Combine and check
-            all_types = (card_types_front + " " + card_types_back).split()
-            print(f'{front_name}, {back_name} : {all_types}')
-            if any(t in types_allowed for t in all_types):
-                temp.add(card)
-        else:
-           card_types = cards.loc[cards['name'] == card, 'type'].iloc[0].split()
-           print(f'{card} : {card_types}')
-           if any(t in types_allowed for t in card_types):
-               temp.add(card)
-
+        # 4. Combine and check
+                all_types = (card_types_front.lower() + " " + card_types_back.lower()).split()
+                #print(f'{front_name}, {back_name} : {all_types}')
+                if re.search(parm['subtype'].lower(), str(all_types)):
+                    temp.add(card)
     results = temp
     print(f"{len(results)} after allowed types filter.")
         
@@ -525,7 +576,7 @@ def load_csvs():
             card_prices = pd.read_csv('AllPrintingsCSVFiles/cardPrices.csv')
             
             st.write("Loading cards...")
-            cards = pd.read_csv('AllPrintingsCSVFiles/cards.csv', low_memory=False, usecols=['name', 'faceName', 'printings', 'colorIdentity', 'colors', 'edhrecRank', 'edhrecSaltiness', 'manaCost', 'manaValue', 'power', 'rarity', 'setCode', 'subtypes', 'supertypes', 'toughness', 'type', 'types', 'uuid'])
+            cards = pd.read_csv('AllPrintingsCSVFiles/cards.csv', low_memory=False, usecols=['name', 'faceName', 'printings', 'colorIdentity', 'colors', 'edhrecRank', 'edhrecSaltiness',  'layout', 'manaCost', 'manaValue', 'power', 'rarity', 'setCode', 'subtypes', 'supertypes', 'toughness', 'type', 'types', 'uuid'])
             
             st.write("Loading sets...")
             sets = pd.read_csv('AllPrintingsCSVFiles/sets.csv', usecols=['code', 'name'])
@@ -604,16 +655,16 @@ with col3: st.text_input(label="Supertype:", key="supertype")
 ##Type selection
 st.subheader("Allowed Types:")
 cols = st.columns(5)
-with cols[0]:    st.checkbox(label="Artifact", key="allowed_types_artifact")
-with cols[1]:    st.checkbox(label="Creature", key="allowed_types_creature")
-with cols[2]:    st.checkbox(label="Enchantment", key="allowed_types_enchantment")
-with cols[3]:    st.checkbox(label="Instant", key="allowed_types_instant")
-with cols[4]:    st.checkbox(label="Land", key="allowed_types_land")
+with cols[0]:    st.checkbox(label="Artifact", key="allowed_types_artifact", value=True)
+with cols[1]:    st.checkbox(label="Creature", key="allowed_types_creature", value=True)
+with cols[2]:    st.checkbox(label="Enchantment", key="allowed_types_enchantment", value=True)
+with cols[3]:    st.checkbox(label="Instant", key="allowed_types_instant", value=True)
+with cols[4]:    st.checkbox(label="Land", key="allowed_types_land", value=True)
 cols = st.columns(4)
-with cols[0]:    st.checkbox(label="Planeswalker", key="allowed_types_planeswalker")
-with cols[1]:    st.checkbox(label="Sorcery", key="allowed_types_sorcery")
-with cols[2]:    st.checkbox(label="Tribal", key="allowed_types_tribal")
-with cols[3]:    st.checkbox(label="Legendary", key="allowed_types_legendary")
+with cols[0]:    st.checkbox(label="Planeswalker", key="allowed_types_planeswalker", value=True)
+with cols[1]:    st.checkbox(label="Sorcery", key="allowed_types_sorcery", value=True)
+with cols[2]:    st.checkbox(label="Tribal", key="allowed_types_tribal", value=True)
+with cols[3]:    st.checkbox(label="Legendary", key="allowed_types_legendary", value=True)
 
 st.subheader("Not Allowed Types:")
 cols = st.columns(5)
