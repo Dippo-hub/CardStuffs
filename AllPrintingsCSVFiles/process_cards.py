@@ -496,11 +496,11 @@ def python_card_search(parm=dict):
     print(f'{len(results)} after supertype filter')
 ##ALLOWED TYPES SEARCH
     temp = set()
-    types_allowed = [thing for thing in allowed_types if parm[f'allowed_types_{thing.lower()}']]
+    types_allowed = [thing.lower() for thing in allowed_types if parm[f'allowed_types_{thing.lower()}']]
     #print(types_allowed)
     for card in results:
             layout = cards.loc[cards['name'] == card, 'layout'].iloc[0]
-            #print(layout)
+
             if layout in ['transform', 'modal_dfc']:
                 parts = card.split(" // ")
                 front_name = parts[0]
@@ -515,21 +515,166 @@ def python_card_search(parm=dict):
                 if back_name:
                     back_match = cards.loc[cards['faceName'] == back_name, 'type']
                     card_types_back = back_match.iloc[0] if not back_match.empty else ""
+            else:
+                front_name = card
+                front_match = cards.loc[cards['name'] == front_name, 'type']
+                card_types_front = front_match.iloc[0] if not front_match.empty else ""
+                card_types_back = ""
+                back_name = ""
 
         # 4. Combine and check
-                all_types = (card_types_front.lower() + " " + card_types_back.lower()).split()
-                #print(f'{front_name}, {back_name} : {all_types}')
-                if re.search(parm['subtype'].lower(), str(all_types)):
-                    temp.add(card)
+            all_types = (card_types_front.lower() + " " + card_types_back.lower()).split()
+            #print(f'{front_name}, {back_name} : {all_types}')
+            if any(thing in types_allowed for thing in all_types):
+                temp.add(card)
     results = temp
     print(f"{len(results)} after allowed types filter.")
-        
-        
 
-        
+##NOT ALLOWED SEARCH
+    temp = set()
+    types_disallowed = [thing.lower() for thing in allowed_types if parm[f'not_allowed_types_{thing.lower()}']]
+    #print(types_disallowed)
+    for card in results:
+            layout = cards.loc[cards['name'] == card, 'layout'].iloc[0]
 
+            if layout in ['transform', 'modal_dfc']:
+                parts = card.split(" // ")
+                front_name = parts[0]
+                back_name = parts[1] if len(parts) > 1 else None
 
+        # 2. Get front types
+                front_match = cards.loc[cards['faceName'] == front_name, 'type']
+                card_types_front = front_match.iloc[0] if not front_match.empty else ""
 
+        # 3. Get back types ONLY if it's a split card
+                card_types_back = ""
+                if back_name:
+                    back_match = cards.loc[cards['faceName'] == back_name, 'type']
+                    card_types_back = back_match.iloc[0] if not back_match.empty else ""
+            else:
+                front_name = card
+                front_match = cards.loc[cards['name'] == front_name, 'type']
+                card_types_front = front_match.iloc[0] if not front_match.empty else ""
+                card_types_back = ""
+                back_name = ""
+
+        # 4. Combine and check
+            all_types = (card_types_front.lower() + " " + card_types_back.lower()).split()
+            #print(f'{front_name}, {back_name} : {all_types}')
+            if any(thing in types_disallowed for thing in all_types):
+                continue
+            else:
+                temp.add(card)
+    results = temp
+    print(f"{len(results)} after not allowed types filter.")
+##TEXT AND SEARCH
+    text_musts = [parm[f'and{i}'].lower() for i in range(1,9) if parm[f'and{i}'] != '']
+    #print(text_musts)
+    temp = set()
+    for card in results:
+            layout = cards.loc[cards['name'] == card, 'layout'].iloc[0]
+
+            if layout in ['transform', 'modal_dfc']:
+                parts = card.split(" // ")
+                front_name = parts[0]
+                back_name = parts[1] if len(parts) > 1 else None
+
+                front_match = cards.loc[cards['faceName'] == front_name, 'text']
+                card_text_front = front_match.iloc[0] if not front_match.empty else ""
+
+                card_text_back = ""
+                if back_name:
+                    back_match = cards.loc[cards['faceName'] == back_name, 'text']
+                    card_text_back = back_match.iloc[0] if not back_match.empty else ""
+            else:
+                front_name = card
+                front_match = cards.loc[cards['name'] == front_name, 'text']
+                card_text_front = front_match.iloc[0] if not front_match.empty else ""
+                card_text_back = ""
+                back_name = ""
+
+        # 4. Combine and check
+            all_text = (card_text_front.lower() + " " + card_text_back.lower())
+            #print(f'{front_name}, {back_name} : {all_text}')
+            good = 0
+            for thing in text_musts:
+                if re.search(thing, all_text):
+                    good += 1
+            if good == len(text_musts):
+                temp.add(card)
+    results = temp
+    print(f'{len(results)} after text ands filter.')
+##OR TEXT SEARCH
+    text_ors_py = [parm[f'or{i}'].lower() for i in range(1,5) if parm[f'or{i}'] != '']
+    temp = set()
+    for card in results:
+            layout = cards.loc[cards['name'] == card, 'layout'].iloc[0]
+
+            if layout in ['transform', 'modal_dfc']:
+                parts = card.split(" // ")
+                front_name = parts[0]
+                back_name = parts[1] if len(parts) > 1 else None
+
+                front_match = cards.loc[cards['faceName'] == front_name, 'text']
+                card_text_front = front_match.iloc[0] if not front_match.empty else ""
+
+                card_text_back = ""
+                if back_name:
+                    back_match = cards.loc[cards['faceName'] == back_name, 'text']
+                    card_text_back = back_match.iloc[0] if not back_match.empty else ""
+            else:
+                front_name = card
+                front_match = cards.loc[cards['name'] == front_name, 'text']
+                card_text_front = front_match.iloc[0] if not front_match.empty else ""
+                card_text_back = ""
+                back_name = ""
+
+        # 4. Combine and check
+            all_text = (card_text_front.lower() + " " + card_text_back.lower())
+            for thing in text_ors_py:
+                if re.search(thing, all_text):
+                    temp.add(card)
+                    break
+            if len(text_ors_py) == 0:
+                temp.add(card)
+    results = temp
+    print(f'{len(results)} after text ors filter.')
+##TEXT NOT SEARCH
+    text_nonos = [parm[f'not{i}'].lower() for i in range(1,5) if parm[f'not{i}'] != '']
+    temp = set()
+    for card in results:
+            layout = cards.loc[cards['name'] == card, 'layout'].iloc[0]
+
+            if layout in ['transform', 'modal_dfc']:
+                parts = card.split(" // ")
+                front_name = parts[0]
+                back_name = parts[1] if len(parts) > 1 else None
+
+                front_match = cards.loc[cards['faceName'] == front_name, 'text']
+                card_text_front = front_match.iloc[0] if not front_match.empty else ""
+
+                card_text_back = ""
+                if back_name:
+                    back_match = cards.loc[cards['faceName'] == back_name, 'text']
+                    card_text_back = back_match.iloc[0] if not back_match.empty else ""
+            else:
+                front_name = card
+                front_match = cards.loc[cards['name'] == front_name, 'text']
+                card_text_front = front_match.iloc[0] if not front_match.empty else ""
+                card_text_back = ""
+                back_name = ""
+
+        # 4. Combine and check
+            all_text = (card_text_front.lower() + " " + card_text_back.lower())
+            bad = False
+            for thing in text_nonos:
+                if re.search(thing, all_text):
+                    bad = True
+                    break
+            if not bad:
+                temp.add(card)
+    results = temp
+    print(f'{len(results)} after text nots filter.')
     return results
 
 
@@ -576,7 +721,7 @@ def load_csvs():
             card_prices = pd.read_csv('AllPrintingsCSVFiles/cardPrices.csv')
             
             st.write("Loading cards...")
-            cards = pd.read_csv('AllPrintingsCSVFiles/cards.csv', low_memory=False, usecols=['name', 'faceName', 'printings', 'colorIdentity', 'colors', 'edhrecRank', 'edhrecSaltiness',  'layout', 'manaCost', 'manaValue', 'power', 'rarity', 'setCode', 'subtypes', 'supertypes', 'toughness', 'type', 'types', 'uuid'])
+            cards = pd.read_csv('AllPrintingsCSVFiles/cards.csv', low_memory=False, usecols=['name', 'faceName', 'printings', 'colorIdentity', 'colors', 'edhrecRank', 'edhrecSaltiness',  'layout', 'manaCost', 'manaValue', 'power', 'rarity', 'setCode', 'subtypes', 'supertypes', 'text', 'toughness', 'type', 'types', 'uuid'])
             
             st.write("Loading sets...")
             sets = pd.read_csv('AllPrintingsCSVFiles/sets.csv', usecols=['code', 'name'])
