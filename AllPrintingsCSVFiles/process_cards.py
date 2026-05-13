@@ -227,6 +227,9 @@ def pretty_results(jeremy=list):
             else:
                 st.write(f"wtf is {doink}")
 
+
+
+
 def python_card_search(parm=dict):
     if parm is None:
         parm = {
@@ -675,7 +678,39 @@ def python_card_search(parm=dict):
                 temp.add(card)
     results = temp
     print(f'{len(results)} after text nots filter.')
-    return results
+
+##PRETTY RESULTS + SORTING
+    finals = {}
+    if parm['sort_by'] == 'CMC':
+        for card in results:
+            mana_value = cards.loc[cards['name'] == card, 'manaValue'].iloc[0]
+            finals.update({card : mana_value})
+        finals = dict(sorted(finals.items(), key = lambda item: item[1]))
+    elif parm['sort_by'] == 'EDH Rank':
+        for card in results:
+            edhrank = cards.loc[cards['name'] == card, 'edhrecRank'].iloc[0]
+            finals.update({card : edhrank})
+        finals = dict(sorted(finals.items(), key = lambda item: item[1], reverse = True))
+    elif parm['sort_by'] == 'Salty':
+        for card in results:
+            edhSalt = cards.loc[cards['name'] == card, 'edhrecSaltiness'].iloc[0]
+            finals.update({card : edhSalt})
+        finals = dict(sorted(finals.items(), key = lambda item: item[1], reverse = True))
+    else:
+        lowest_uuids = {}
+        for card in results:
+            uuids = pd.Series(cards.loc[cards['name'] == card, 'uuid'])
+            prices = {}
+            for uuid in uuids:
+                price = card_prices.loc[card_prices['uuid'] == uuid, 'price']
+                price = price.iloc[0] if not price.empty else 999999
+                prices.update({uuid : price})
+            prices = dict(sorted(prices.items(), key = lambda item: item[1]))
+            finals.update({card : min(prices.values())})
+            lowest_uuids.update({card : min(prices, key=prices.get)})
+            finals = dict(sorted(finals.items(), key = lambda item: item[1]))
+        print(lowest_uuids)
+    return finals
 
 
 
