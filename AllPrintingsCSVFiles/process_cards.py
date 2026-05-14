@@ -6,6 +6,7 @@ import subprocess
 import time
 import atexit
 import socket
+import scrython
 
 def start_perl_server():
     proc = subprocess.Popen(
@@ -709,8 +710,7 @@ def python_card_search(parm=dict):
             finals.update({card : min(prices.values())})
             lowest_uuids.update({card : min(prices, key=prices.get)})
             finals = dict(sorted(finals.items(), key = lambda item: item[1]))
-        print(lowest_uuids)
-    return finals
+    return finals, lowest_uuids
 
 
 
@@ -891,8 +891,8 @@ st.selectbox(label="Sort by", options=sort_by_list, key="sort_by")
 st.selectbox(label="Engine Language", options=["Perl", "Python"], key="platform")
 ##Search
 st.sidebar.button(label="Search", key="search")
-st.sidebar.button(label="Reload", key="Reload")
-if st.session_state.Reload:
+reload = st.sidebar.button(label="Reload", key="Reload")
+if reload:
     st.cache_data.clear()
 if st.session_state.search:
     with st.sidebar.status(label = "Thinking...", state="running") as status:
@@ -900,16 +900,29 @@ if st.session_state.search:
                 if key != "platform":
                     searches[key] = st.session_state[key]
             if st.session_state.platform == "Perl":
-                send = transform_to_request(searches)
-                start = "request:"
-                onward = "".join(f"{key}:{send[key]}:" for key in send.keys())
-                go_forth = start + onward + "\n"
-                #st.write(go_forth)
-                results = send_request(go_forth)
-                status.update(label="Stuff!", state="complete")
+                try:
+                    send = transform_to_request(searches)
+                    start = "request:"
+                    onward = "".join(f"{key}:{send[key]}:" for key in send.keys())
+                    go_forth = start + onward + "\n"
+                    #st.write(go_forth)
+                    results = send_request(go_forth)
+                    status.update(label="Stuff!", state="complete")
+                except Exception as e:
+                    st.write(e)
+                    status.update(label="No!", state="error")
             elif st.session_state.platform == "Python":
-                st.write(python_card_search(searches))
-                status.update(label="Done!", state="complete")
+                try:
+                    display_list, cheaplist = python_card_search(searches)
+                    status.update(label="Done!", state="complete")
+                    if len(display_list) > 0:
+                        for card in display_list:
+                            print(card)
+                    else:
+                        st.write("No cards found. Maybe check your spelling?")
+                except Exception as e:
+                    st.write(e)
+                    status.update(label="No!", state="error")
             
 
 ##Display results
