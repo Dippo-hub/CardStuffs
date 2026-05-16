@@ -8,6 +8,10 @@ import atexit
 import socket
 import scrython
 
+
+#ScrythonRequestHandler.set_user_agent('Python Card Search by Dippo-hub. Contact at dippoplaz@gmail.com')
+
+
 def start_perl_server():
     proc = subprocess.Popen(
         ["perl", "AllPrintingsCSVFiles/process_cards.pl"],
@@ -227,7 +231,29 @@ def pretty_results(jeremy=list):
                 continue
             else:
                 st.write(f"wtf is {doink}")
-
+def display_card(card):
+    st.write(f"Name: {card}")
+    response = requests.get(f"https://api.scryfall.com/cards/named?exact={card}")
+    if response.status_code == 200:
+        img_data = response.json()
+        if 'card_faces' in img_data:
+            if 'image_uris' in img_data['card_faces'][0]:
+                card_front = img_data['card_faces'][0]['image_uris'].get('normal')
+                if card_front:
+                    st.image(card_front)
+            if 'image_uris' in img_data['card_faces'][1]:
+                card_back = img_data['card_faces'][1]['image_uris'].get('normal')
+                if card_back:
+                    st.image(card_back)
+        else:
+            if 'image_uris' in img_data:
+                card_img = img_data['image_uris'].get('normal')
+                if card_img:
+                    st.image(card_img)
+    else:
+        st.write(f"Couldn't get image for {card} :(")
+    time.sleep(0.5)
+    return
 
 
 
@@ -338,13 +364,14 @@ def python_card_search(parm=dict):
         results = temp
         print(f"{len(results)} after format filter.")
 ##RARITY SEARCH
-    temp = set()
-    for card in results:
-        card_rarity = cards.loc[cards['name'] == card, 'rarity'].iloc[0]
-        for rarity in ["common", "uncommon", "rare", "mythic", "special"]:
-            if parm[f'display_{rarity}'] and card_rarity == rarity:
-                temp.add(card)
-    results = temp
+    if not (parm['display_common'] and parm['display_uncommon'] and parm['display_rare'] and parm['display_mythic'] and parm['display_special']):
+        temp = set()
+        for card in results:
+            card_rarity = cards.loc[cards['name'] == card, 'rarity'].iloc[0]
+            for rarity in ["common", "uncommon", "rare", "mythic", "special"]:
+                if parm[f'display_{rarity}'] and card_rarity == rarity:
+                    temp.add(card)
+        results = temp
     print(f"{len(results)} after rarity filter.")
 ##MUST BE COLOR SEARCH
     search_for_must = False
@@ -383,21 +410,27 @@ def python_card_search(parm=dict):
         results = temp
     print(f"{len(results)} after allowed filter.")
 ##NOT ALLOWED COLOR SEARCH
-    temp = set()
-    for card in results:
-        bad = False
-        card_color = str(cards.loc[cards['name'] == card, 'colorIdentity'].iloc[0]).split(",") or None
-        #print(card_color)
-        for color, code in zip(allowed_colors, color_codes):
-            #print(color, code)
-            if parm[f'cannot_be_{color.lower()}'] and re.search(code, str(card_color)):
-                bad = True
-                break
-            else:
-                continue
-        if not bad:
-            temp.add(card)
-    results = temp
+    not_allowed_search = False
+    for color in allowed_colors:
+        if parm[f'cannot_be_{color.lower()}']:
+            not_allowed_search = True
+            break
+    if not_allowed_search:
+        temp = set()
+        for card in results:
+            bad = False
+            card_color = str(cards.loc[cards['name'] == card, 'colorIdentity'].iloc[0]).split(",") or None
+            #print(card_color)
+            for color, code in zip(allowed_colors, color_codes):
+                #print(color, code)
+                if parm[f'cannot_be_{color.lower()}'] and re.search(code, str(card_color)):
+                    bad = True
+                    break
+                else:
+                    continue
+            if not bad:
+                temp.add(card)
+        results = temp
     print(f"{len(results)} after not allowed filter.")
 ##POWER SEARCH
     if parm['power_low'] != '' and parm['power_high'] != '':
@@ -430,16 +463,16 @@ def python_card_search(parm=dict):
         results = temp
     print(f"{len(results)} after toughness filter.")
 ##MANA VALUE SEARCH
-    temp = set()
-    if parm['cmc_low'] == '':
-        parm['cmc_low']=0
-    if parm['cmc_high'] == '':
-        parm['cmc_high'] = 308
-    for card in results:
-        cmc = int(cards.loc[cards['name'] == card, 'manaValue'].iloc[0])
-        if cmc in range(int(parm['cmc_low']), int(parm['cmc_high'])+1):
-            temp.add(card)
-    if len(temp) > 0:
+    if parm['cmc_low'] != '' and parm['cmc_high'] != '':
+        temp = set()
+        if parm['cmc_low'] == '':
+            parm['cmc_low']=0
+        if parm['cmc_high'] == '':
+            parm['cmc_high'] = 308
+        for card in results:
+            cmc = int(cards.loc[cards['name'] == card, 'manaValue'].iloc[0])
+            if cmc in range(int(parm['cmc_low']), int(parm['cmc_high'])+1):
+                temp.add(card)
         results = temp
     print(f'{len(results)} after cmc filter.')
 ##SUBTYPE SEARCH
@@ -499,10 +532,11 @@ def python_card_search(parm=dict):
         results = temp
     print(f'{len(results)} after supertype filter')
 ##ALLOWED TYPES SEARCH
-    temp = set()
     types_allowed = [thing.lower() for thing in allowed_types if parm[f'allowed_types_{thing.lower()}']]
-    #print(types_allowed)
-    for card in results:
+    if len(types_allowed) > 0:
+        temp = set()
+        #print(types_allowed)
+        for card in results:
             layout = cards.loc[cards['name'] == card, 'layout'].iloc[0]
 
             if layout in ['transform', 'modal_dfc']:
@@ -531,14 +565,16 @@ def python_card_search(parm=dict):
             #print(f'{front_name}, {back_name} : {all_types}')
             if any(thing in types_allowed for thing in all_types):
                 temp.add(card)
-    results = temp
+        results = temp
     print(f"{len(results)} after allowed types filter.")
 
 ##NOT ALLOWED SEARCH
-    temp = set()
+    
     types_disallowed = [thing.lower() for thing in allowed_types if parm[f'not_allowed_types_{thing.lower()}']]
-    #print(types_disallowed)
-    for card in results:
+    if len(types_disallowed) > 0:
+        temp = set()
+        #print(types_disallowed)
+        for card in results:
             layout = cards.loc[cards['name'] == card, 'layout'].iloc[0]
 
             if layout in ['transform', 'modal_dfc']:
@@ -569,13 +605,14 @@ def python_card_search(parm=dict):
                 continue
             else:
                 temp.add(card)
-    results = temp
+        results = temp
     print(f"{len(results)} after not allowed types filter.")
 ##TEXT AND SEARCH
     text_musts = [parm[f'and{i}'].lower() for i in range(1,9) if parm[f'and{i}'] != '']
+    if len(text_musts) in range(1,9):
     #print(text_musts)
-    temp = set()
-    for card in results:
+        temp = set()
+        for card in results:
             layout = cards.loc[cards['name'] == card, 'layout'].iloc[0]
 
             if layout in ['transform', 'modal_dfc']:
@@ -598,7 +635,7 @@ def python_card_search(parm=dict):
                 back_name = ""
 
         # 4. Combine and check
-            all_text = (card_text_front.lower() + " " + card_text_back.lower())
+            all_text = (str(card_text_front).lower() + " " + str(card_text_back).lower())
             #print(f'{front_name}, {back_name} : {all_text}')
             good = 0
             for thing in text_musts:
@@ -606,12 +643,13 @@ def python_card_search(parm=dict):
                     good += 1
             if good == len(text_musts):
                 temp.add(card)
-    results = temp
+        results = temp
     print(f'{len(results)} after text ands filter.')
 ##OR TEXT SEARCH
     text_ors_py = [parm[f'or{i}'].lower() for i in range(1,5) if parm[f'or{i}'] != '']
-    temp = set()
-    for card in results:
+    if len(text_ors_py) > 0:
+        temp = set()
+        for card in results:
             layout = cards.loc[cards['name'] == card, 'layout'].iloc[0]
 
             if layout in ['transform', 'modal_dfc']:
@@ -641,12 +679,13 @@ def python_card_search(parm=dict):
                     break
             if len(text_ors_py) == 0:
                 temp.add(card)
-    results = temp
+        results = temp
     print(f'{len(results)} after text ors filter.')
 ##TEXT NOT SEARCH
     text_nonos = [parm[f'not{i}'].lower() for i in range(1,5) if parm[f'not{i}'] != '']
-    temp = set()
-    for card in results:
+    if len(text_nonos) > 0:
+        temp = set()
+        for card in results:
             layout = cards.loc[cards['name'] == card, 'layout'].iloc[0]
 
             if layout in ['transform', 'modal_dfc']:
@@ -677,11 +716,12 @@ def python_card_search(parm=dict):
                     break
             if not bad:
                 temp.add(card)
-    results = temp
+        results = temp
     print(f'{len(results)} after text nots filter.')
 
 ##PRETTY RESULTS + SORTING
     finals = {}
+    lowest_uuids = {}
     if parm['sort_by'] == 'CMC':
         for card in results:
             mana_value = cards.loc[cards['name'] == card, 'manaValue'].iloc[0]
@@ -698,7 +738,6 @@ def python_card_search(parm=dict):
             finals.update({card : edhSalt})
         finals = dict(sorted(finals.items(), key = lambda item: item[1], reverse = True))
     else:
-        lowest_uuids = {}
         for card in results:
             uuids = pd.Series(cards.loc[cards['name'] == card, 'uuid'])
             prices = {}
@@ -753,7 +792,7 @@ def load_csvs():
             card_legalities = pd.read_csv('AllPrintingsCSVFiles/cardLegalities.csv')
             
             st.write("Loading card prices...")
-            card_prices = pd.read_csv('AllPrintingsCSVFiles/cardPrices.csv')
+            card_prices = pd.read_csv('AllPrintingsCSVFiles/cardPrices.csv', usecols=['uuid', 'price'])
             
             st.write("Loading cards...")
             cards = pd.read_csv('AllPrintingsCSVFiles/cards.csv', low_memory=False, usecols=['name', 'faceName', 'printings', 'colorIdentity', 'colors', 'edhrecRank', 'edhrecSaltiness',  'layout', 'manaCost', 'manaValue', 'power', 'rarity', 'setCode', 'subtypes', 'supertypes', 'text', 'toughness', 'type', 'types', 'uuid'])
@@ -767,7 +806,7 @@ def load_csvs():
 st.title("MTG Card Search")
 card_legalities, card_prices, cards, sets = load_csvs()
 set_map = {name: code for code, name in zip(sets['code'], sets['name'])}
-st.dataframe(cards.head(5))
+#st.dataframe(cards.head(5))
 
 ##Format selection
 st.selectbox("Format", format_list, key="format")
@@ -888,7 +927,7 @@ with nots[3]:    st.text_input(label="not4", key="not4", label_visibility="hidde
 
 ##Sort by
 st.selectbox(label="Sort by", options=sort_by_list, key="sort_by")
-st.selectbox(label="Engine Language", options=["Perl", "Python"], key="platform")
+#st.selectbox(label="Engine Language", options=["Perl", "Python"], key="platform")
 ##Search
 st.sidebar.button(label="Search", key="search")
 reload = st.sidebar.button(label="Reload", key="Reload")
@@ -918,15 +957,18 @@ if st.session_state.search:
                     if len(display_list) > 0:
                         for card in display_list:
                             print(card)
+                            display_card(card)
                     else:
                         st.write("No cards found. Maybe check your spelling?")
                 except Exception as e:
                     st.write(e)
                     status.update(label="No!", state="error")
+                    print(e)
             
 
 ##Display results
 with st.sidebar:    
+    st.select_slider(label="Platform", options=["Perl", "Python"], key="platform")
     st.header("Results:")
     pretty_results(results)
 
