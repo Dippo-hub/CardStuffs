@@ -1,42 +1,79 @@
 import random as r
-#from weapons import ADVENTWeapon, XCOMWeapon, CHOSENWeapon, LOSTWeapon
+from weapons import ADVENTWeapon, XCOMWeapon, CHOSENWeapon, LOSTWeapon
 
 enemy_info = {
-    #'Enemy_name: [force_level 0, hp 1, mobility 2, aim 3, defense 4, will 5, can_use_cover 6, can_attack_twice 7 , primary_weapon 8, secondary_weapon 9, action_points 10, leader 11]
-    'Trooper' : [1, 3, 5, 65, 0, 50, True, False, 'ADVENT_rifle', None, 2, False],
-    'Captain': [2, 6, 6, 70, 0, 50, True, False, 'ADVENT_rifle', None, 2, True],
-    'Sectoid': [2, 8, 6, 65, 0, 80, True, False, 'sectoid_beam', None, 2, True],
-    'Stun_Lancer': [3, 5, 8, 55, 0, 50, True, False, 'ADVENT_rifle', 'stun_baton', 2, False],
-    'Priest': [4, 5, 5, 60, 0, 80, True, False, 'ADVENT_rifle', None, 2, False],
-    'Purifier': [4, 5, 5, 40, 0, 50, True, False, 'ADVENT_flamethrower', None, 2, False],
-    'Viper': [5, 8, 8, 70, 0, 60, True, False, 'ADVENT_beam_rifle', None, 2, True],
-    'Muton': [6, 10, 6, 70, 5, 60, True, False, 'muton_beam', 'muton_bayonet', 2, True],
-    'Codex': [7, 12, 7, 65, 0, 90, True, False, 'ADVENT_beam_rifle', None, 2, False],
-    'Berserker': [7, 18, 10, 60, 0, 60, False, False, 'berserker_punch', None, 2, True],
-    'Shieldbearer': [8, 8, 6, 65, 10, 60, True, False, 'ADVENT_rifle', None, 2, False],
-    'Spectre': [8, 14, 6, 65, 0, 0, True, False, 'ADVENT_beam_rifle', None, 3, True],
-    'Chryssalid': [12, 9, 10, 70, 5, 90, False, False, 'pincer', None, 2, True],
-    'Archon': [11, 18, 8, 70, 20, 90, False, False, 'archon_staff', 'archon_melee', 3, True],
-    'Andromedon': [14, 18, 6, 70, 10, 100, True, False, 'andromedon_beam', 'andromedon_punch', 2, True],
-    'Sectopod': [16, 28, 8, 80, 15, 0, False, True, 'sectopod_cannon', 'wrath_cannon', 3, True],
-    'Gatekeeper': [18, 30, 9, 80, 25, 150, False, False, 'gatekeeper_beam', None, 3, True],
-    'Avatar': [20, 35, 11, 85, 10, 200, True, False, 'psionic_rifle', 'psi_amp', 3, True]
+    #'Enemy_name: [force_level 0, hp 1, mobility 2, aim 3, defense 4, armor 5, will 6, can_use_cover 7, can_attack_twice 8 , primary_weapon 9, secondary_weapon 10, action_points 11, leader 12]
+    'Trooper' : [1, 3, 5, 65, 0, 0, 50, True, False, 'ADVENT_rifle', None, 2, False],
+    'Captain': [2, 6, 6, 70, 0, 0, 50, True, False, 'ADVENT_rifle', None, 2, True],
+    'Sectoid': [2, 8, 6, 65, 0, 0, 80, True, False, 'sectoid_beam', None, 2, True],
+    'Stun_Lancer': [3, 5, 8, 55, 0, 0, 50, True, False, 'ADVENT_rifle', 'stun_baton', 2, False],
+    'Priest': [4, 5, 5, 60, 0, 0, 80, True, False, 'ADVENT_rifle', None, 2, False],
+    'Purifier': [4, 5, 5, 40, 0, 1, 50, True, False, 'ADVENT_flamethrower', None, 2, False],
+    'Viper': [5, 8, 8, 70, 0, 0, 60, True, False, 'ADVENT_beam_rifle', None, 2, True],
+    'Muton': [6, 10, 6, 70, 5, 1, 60, True, False, 'muton_beam', 'muton_bayonet', 2, True],
+    'Codex': [7, 12, 7, 65, 0, 0, 90, True, False, 'ADVENT_beam_rifle', None, 2, False],
+    'Berserker': [7, 18, 10, 60, 0, 0, 60, False, False, 'berserker_punch', None, 2, True],
+    'Shieldbearer': [8, 8, 6, 65, 10, 3, 60, True, False, 'ADVENT_rifle', None, 2, False],
+    'Spectre': [8, 14, 6, 65, 0, 0, 0, True, False, 'ADVENT_beam_rifle', None, 3, True],
+    'Chryssalid': [12, 9, 10, 70, 5, 1, 90, False, False, 'pincer', None, 2, True],
+    'Archon': [11, 18, 8, 70, 20, 0, 90, False, False, 'archon_staff', 'archon_melee', 3, True],
+    'Andromedon': [14, 18, 6, 70, 10, 3, 100, True, False, 'andromedon_beam', 'andromedon_punch', 2, True],
+    'Sectopod': [16, 28, 8, 80, 15, 5, 0, False, True, 'sectopod_cannon', 'wrath_cannon', 3, True],
+    'Gatekeeper': [18, 30, 9, 80, 25, 6, 150, False, False, 'gatekeeper_beam', None, 3, True],
+    'Avatar': [20, 35, 11, 85, 10, 4, 200, True, False, 'psionic_rifle', 'psi_amp', 3, True]
 }
 
-ADVENT_weapons = ['stun_baton', 'andromedon_punch', 'wrath_cannon', 'psionic_rifle', 'ADVENT_beam_rifle', 'ADVENT_flamethrower', 'archon_staff', 'andromedon_beam', 'archon_melee', 'pincer', 'muton_beam', 'sectoid_beam', 'gatekeeper_beam', 'sectopod_cannon', 'psi_amp', 'ADVENT_rifle', 'berserker_punch', 'muton_bayonet']
+def create_pods(pod_count, force_level):
+    enemies = enemy_info.keys()
+    leaders = [enemy for enemy in enemies if enemy_info.get(enemy)[12]]
+    followers = [enemy for enemy in enemies if not enemy_info.get(enemy)[12]]
+    #print(f'enemies: {enemies},\n leaders: {leaders},\n followers: {followers}')
+    pod_size = round(force_level/pod_count) if round(force_level/pod_count) >2 else 2
+    pods = []
+    for pod in range(pod_count):
+        temp = []
+        for x in range(pod_size):
+            valid = False
+            max_fl = force_level
+            while not valid:
+                if len(temp) == 0:
+                    g = r.randint(0, len(leaders)-1)
+                    #print(g)
+                    leader = leaders[g]
+                    if enemy_info.get(leader)[0] <= max_fl:
+                        temp.append(leader + f' {str(len(pods))}{str(len(temp))}')
+                        max_fl = enemy_info.get(leader)[0]
+                        valid = True
+                else:
+                    g = r.randint(0, len(followers)-1)
+                    #print(g)
+                    enemy = followers[g]
+                    if enemy_info.get(enemy)[0] <= max_fl:
+                        enemy += f' {str(len(pods))}{str(len(temp))}'
+                        temp.append(enemy)
+                        valid = True
+        pods.append(temp)
+    print(pods)
+    return pods
+                
+def initialize_enemy(name):
+    search_name = name.split(' ')[0]
+    return Unit(name=name, force_level=enemy_info.get(search_name)[0], hp=enemy_info.get(search_name)[1], mobility=enemy_info.get(search_name)[2], aim=enemy_info.get(search_name)[3], defense=enemy_info.get(search_name)[4], armor=enemy_info.get(search_name)[5], will=enemy_info.get(search_name)[6], can_use_cover=enemy_info.get(search_name)[7], can_attack_twice=enemy_info.get(search_name)[8], primary_weapon=enemy_info.get(search_name)[9], secondary_weapon=enemy_info.get(search_name)[10], action_points=enemy_info.get(search_name)[11], leader=enemy_info.get(search_name)[12], faction='ADVENT')
 
 class Unit:
-    def __init__(self, force_level, hp, mobility, aim, defense, will, can_use_cover, can_attack_twice, primary_weapon, secondary_weapon, action_points, leader, faction):
+    def __init__(self, name, force_level, hp, mobility, aim, defense, armor, will, can_use_cover, can_attack_twice, primary_weapon, secondary_weapon, action_points, leader, faction):
+        self.name = name
         self.force_level = force_level
         self.hp = hp
         self.mobility = mobility
         self.aim = aim
         self.defense = defense
+        self.armor = armor
         self.will = will
         self.can_use_cover = can_use_cover
         self.can_attack_twice = can_attack_twice
-        self.primary_weapon = primary_weapon
-        self.secondary_weapon = secondary_weapon
+        self.primary_weapon = ADVENTWeapon(primary_weapon)
+        self.secondary_weapon = ADVENTWeapon(secondary_weapon) if secondary_weapon is not None else None
         self.ap = action_points
         self.is_leader = leader
         self.faction = faction
@@ -64,9 +101,17 @@ class Unit:
         hit_roll = r.randint(1, 100)
         if hit_roll <= hit_chance:
             print(f"{self.name} attacks {target.name}.")
-            damage = self.primary_weapon.damage - target.armor
+            damage = self.primary_weapon.damage() - target.armor
+            damage = damage if damage > 1 else 1
             if hit_roll < 15:
                 print("Critical hit!")
                 damage += 2
-            target.hp -= damage
+            target.hp -= damage 
             print(f'{target.name} takes {damage} damage.')
+            if target.hp<=0:
+                print(f"{target.name} was killed!")
+        else:
+            print(f"{self.name} misses {target.name} ({hit_chance}% to hit, rolled {100 - hit_roll}).")
+
+if __name__ == "__main__":
+    pass
