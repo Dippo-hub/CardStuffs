@@ -27,10 +27,56 @@ class ADVENTWeapon:
 
 
 class XCOMWeapon:
-    pass
+    weapon_base_damages = {
+        'rifle': [3,5],
+        'shotgun':  [4,6],
+        'cannon': [4,6],
+        'sniper': [4,6],
+        'sword': [3,5],
+        'pistol': [2,3],
+        'gremlin': [2,2],
+        'grenade_launcher': [0,0]
+    }
+    def __init__(self, weapon, tier):
+        self.damage_range = self.weapon_base_damages.get(weapon)
+        self.tier = tier
+
+    def damage(self):
+        return r.randint(self.damage_range[0], self.damage_range[1]) + (2 * self.tier)
 
 class LOSTWeapon:
-    pass
+    weapon_base_damages = {
+        'basic': [1,2],
+        'dasher': [2,3],
+        'brute': [4,5]
+    }
+
+    def __init__(self, weapon, tier):
+        self.damage_range = self.weapon_base_damages.get(weapon)
+        self.tier = tier
+
+    def damage(self):
+        return r.randint(self.damage_range[0], self.damage_range[1]) + (2 * self.tier)
 
 class CHOSENWeapon:
-    pass
+    weapon_base_damages = {
+        'arashi': [2,4],
+        'darklance': [3,5],
+        'disruptor': [2,4],
+        'katana': [3,4],
+        'darkclaw': [3,4]
+    }
+
+    def __init__(self, weapon, knowledge):
+        self.damage_range = self.weapon_base_damages.get(weapon)
+        self.knowledge = knowledge
+
+    def damage(self):
+        return r.randint(self.damage_range[0], self.damage_range[1]) + (3 * self.knowledge)
+    
+if __name__ == "__main__":
+    Cannon = XCOMWeapon('cannon', 2)
+    Brute = LOSTWeapon('brute', 1)
+    Arashi = CHOSENWeapon('arashi', 2)
+
+    print(Cannon.damage(), Brute.damage(), Arashi.damage())
