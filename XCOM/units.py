@@ -41,7 +41,7 @@ def create_pods(pod_count, force_level):
                     #print(g)
                     leader = leaders[g]
                     if enemy_info.get(leader)[0] <= max_fl:
-                        temp.append(leader + f' {str(len(pods))}{str(len(temp))}')
+                        temp.append(initialize_enemy(leader + f' {str(len(pods))}{str(len(temp))}'))
                         max_fl = enemy_info.get(leader)[0]
                         valid = True
                 else:
@@ -50,10 +50,9 @@ def create_pods(pod_count, force_level):
                     enemy = followers[g]
                     if enemy_info.get(enemy)[0] <= max_fl:
                         enemy += f' {str(len(pods))}{str(len(temp))}'
-                        temp.append(enemy)
+                        temp.append(initialize_enemy(enemy))
                         valid = True
         pods.append(temp)
-    print(pods)
     return pods
                 
 def initialize_enemy(name):

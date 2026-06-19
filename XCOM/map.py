@@ -1,4 +1,8 @@
 import random as r
+import math
+
+def distance(x1,x2,y1,y2):
+    return math.sqrt((x2-x1)*(x2-x1) + (y2-y1)*(y2-y1))
 
 class Map:
     def __init__(self, size='medium'):
@@ -26,7 +30,7 @@ class Map:
                 if square is not None:
                     row.append(square.name[0])
                 elif cover:
-                    row.append('c')
+                    row.append('k')
                 else:
                     row.append('.')
             print(" ".join(row))
@@ -37,3 +41,5 @@ if __name__ == "__main__":
     map.grid[7][14] = initialize_enemy('Gatekeeper 00')
     print(map.grid[7][14].name)
     map.display()
+
+    
