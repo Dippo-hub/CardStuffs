@@ -16,8 +16,8 @@ class Map:
             self.width = 45
             self.height = 45
 
-        self.grid = [[None for _ in range(self.height)] for _ in range(self.width)]
-        self.cover = [[r.randint(0, 10) < 3 for _ in range(self.height)] for _ in range(self.width)]
+        self.grid = [[None for _ in range(self.width)] for _ in range(self.height)]
+        self.cover = [[r.randint(0, 10) < 3 for _ in range(self.width)] for _ in range(self.height)]
 
 
     def display(self):
@@ -28,7 +28,10 @@ class Map:
                 cover = self.cover[y][x]
 
                 if square is not None:
-                    row.append(square.name[0])
+                    if square.hp > 0:
+                        row.append(square.name[0])
+                    else:
+                        row.append('.')
                 elif cover:
                     row.append('k')
                 else:
