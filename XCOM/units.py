@@ -23,6 +23,43 @@ enemy_info = {
     'Avatar': [20, 35, 11, 85, 10, 4, 200, True, False, 'psionic_rifle', 'psi_amp', 3, True]
 }
 
+# 20 common first names from major world powers
+first_names = [
+    "James", "Olivia",     # USA
+    "John", "Emma",        # UK
+    "Jean", "Marie",       # France
+    "Lucas", "Lina",       # Germany
+    "Alexander", "Elena",  # Russia
+    "Wei", "Fang",         # China
+    "Hiroshi", "Sakura",   # Japan
+    "Aarav", "Ananya",     # India
+    "Mateo", "Sofia",      # Brazil
+    "Liam", "Chloe"        # Canada
+]
+
+# 20 common last names from major world powers
+last_names = [
+    "Smith", "Johnson",    # USA
+    "Jones", "Williams",   # UK
+    "Martin", "Bernard",   # France
+    "Müller", "Schmidt",   # Germany
+    "Ivanov", "Smirnov",   # Russia
+    "Wang", "Li",          # China
+    "Sato", "Suzuki",      # Japan
+    "Sharma", "Verma",     # India
+    "Silva", "Santos",     # Brazil
+    "Tremblay", "Roy"      # Canada
+]
+
+
+def generate_random_soldier(rank, tech_level):
+    first_name = r.choice(first_names)
+    last_name = r.choice(last_names)
+    name = first_name +" "+ last_name
+    return Unit(name=name, force_level=rank, hp=3+rank+3*tech_level, mobility=8+rank//2, aim=70+2*rank, defense=0, armor=tech_level, will=55+3*rank, can_use_cover=True, can_attack_twice=False, primary_weapon='rifle', secondary_weapon=None, action_points=2, leader=False, faction='XCOM', tier=tech_level)
+
+
+
 def create_pods(pod_count, force_level):
     enemies = enemy_info.keys()
     leaders = [enemy for enemy in enemies if enemy_info.get(enemy)[12]]
@@ -120,4 +157,5 @@ class Unit:
             print(f"{self.name} misses {target.name} ({hit_chance}% to hit, rolled {100 - hit_roll}).")
 
 if __name__ == "__main__":
-    pass
+    soldier = generate_random_soldier(4, 2)
+    print(soldier.name)
