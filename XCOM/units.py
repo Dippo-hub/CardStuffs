@@ -97,7 +97,7 @@ def initialize_enemy(name):
     return Unit(name=name, force_level=enemy_info.get(search_name)[0], hp=enemy_info.get(search_name)[1], mobility=enemy_info.get(search_name)[2], aim=enemy_info.get(search_name)[3], defense=enemy_info.get(search_name)[4], armor=enemy_info.get(search_name)[5], will=enemy_info.get(search_name)[6], can_use_cover=enemy_info.get(search_name)[7], can_attack_twice=enemy_info.get(search_name)[8], primary_weapon=enemy_info.get(search_name)[9], secondary_weapon=enemy_info.get(search_name)[10], action_points=enemy_info.get(search_name)[11], leader=enemy_info.get(search_name)[12], faction='ADVENT')
 
 class Unit:
-    def __init__(self, name, force_level, hp, mobility, aim, defense, armor, will, can_use_cover, can_attack_twice, primary_weapon, secondary_weapon, action_points, leader, faction, tier=0):
+    def __init__(self, name, force_level, hp, mobility, aim, defense, armor, will, can_use_cover, can_attack_twice, primary_weapon, secondary_weapon, action_points, leader, faction, tier=0, abilities=[]):
         self.name = name
         self.force_level = force_level
         self.hp = hp
@@ -108,6 +108,7 @@ class Unit:
         self.will = will
         self.can_use_cover = can_use_cover
         self.can_attack_twice = can_attack_twice
+        self.overwatch = False
         if faction == 'ADVENT':
             self.primary_weapon = ADVENTWeapon(primary_weapon)
         elif faction == 'XCOM':
@@ -120,8 +121,13 @@ class Unit:
         self.ap = action_points
         self.is_leader = leader
         self.faction = faction
+        self.abilities = abilities
         self.x = None
         self.y = None
+        if self.faction == 'XCOM':
+            self.state = 'CONCEALED'
+        else:
+            self.state = 'PATROL'
 
     def move(self, x, y):
         if self.x is None or self.y is None:
@@ -155,6 +161,21 @@ class Unit:
                 print(f"{target.name} was killed!")
         else:
             print(f"{self.name} misses {target.name} ({hit_chance}% to hit, rolled {100 - hit_roll}).")
+
+    def process_abilities(self):
+            for i, a in enumerate(self.abilities, start=1):
+                print(f"{i}: {a}")
+            selection = input("Select ability to use: ")
+            try:
+                    selection = int(selection)
+                    if 1 <= selection <= len(self.abilities):
+                        ability = self.abilities[selection - 1]
+                        print(f"{self.name} uses {ability}.")
+                        # Implement ability effects here
+                    else:
+                        print("Invalid selection.")
+            except ValueError:
+                    print("Invalid input. Please enter a number.")
 
 if __name__ == "__main__":
     soldier = generate_random_soldier(4, 2)

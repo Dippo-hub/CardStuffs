@@ -1,4 +1,5 @@
 import random as r
+#from ai import EnemyAI
 from map import Map, distance
 from units import Unit, initialize_enemy, create_pods
 import time
@@ -56,6 +57,7 @@ class Mission:
                                 enemy.y = center_y+1
                                 self.total_enemy_hp += enemy.hp
                     break
+        self.enemies = [enemy for pod in self.pods for enemy in pod]
 
     def deploy_soldiers(self):
         for x in range(self.map.width):
@@ -133,6 +135,7 @@ class Mission:
         )
     
     def is_covered_from_unit(self, soldier, unit) -> bool:
+        #If the soldier is covered from the unit
         if not self.is_in_cover(soldier):
             return False
         if not soldier.can_use_cover:
@@ -153,20 +156,29 @@ class Mission:
     
     def targets(self, soldier) -> dict:
         targets = {}
-        for pod in self.pods:
-            for enemy in pod:
-                if self.line_of_sight(soldier, enemy):
-                    hit_chance = soldier.aim - enemy.defense
-                    hit_chance -= 20 if self.is_covered_from_unit(enemy, soldier) else 0
-                    targets[enemy] = hit_chance
+        if soldier.faction == 'XCOM':
+            for pod in self.pods:
+                for enemy in pod:
+                    if self.line_of_sight(soldier, enemy) and enemy.hp>0:
+                        hit_chance = soldier.aim - enemy.defense
+                        hit_chance -= 20 if self.is_covered_from_unit(enemy, soldier) else 0
+                        targets[enemy] = hit_chance
+        elif soldier.faction == 'ADVENT':
+            for s in self.soldiers:
+                if self.line_of_sight(soldier, s) and s.hp > 0:
+                    hit_chance = soldier.aim - s.defense
+                    hit_chance -= 20 if self.is_covered_from_unit(s, soldier) else 0
+                    targets[s] = hit_chance
         return targets
     
     def process_targets(self, targets):
         i=1
+        processed_targets = {}
         for e, value in targets.items():
-            print(f'{i}: {e.name}: {value}')
+            processed_targets[i] = f'{e.name}: {value}'
             i += 1
-    
+        return processed_targets
+
     def refresh_map(self):
         self.total_enemy_hp = 0
         for pod in self.pods:
@@ -178,6 +190,7 @@ class Mission:
     def XCOM_turn(self):
         for s in self.soldiers:
             self.refresh_map()
+            s.overwatch = False
             print(f"{s.name}'s turn")
             ap_used = 0
             while ap_used < s.ap:
@@ -185,7 +198,7 @@ class Mission:
                 if action == 'A':
                     targets = self.targets(s)
                     if targets:
-                        self.process_targets(targets)
+                        print(self.process_targets(targets))
                         target_list = [key for key in targets.keys()]
                         try:
                             target = int(input("Select target: "))
@@ -199,6 +212,130 @@ class Mission:
                             ap_used = s.ap
                     else:
                         print("No targets for", s.name)
+                elif action == 'M':
+                    try:
+                        print("Current position: (", s.x, ",", s.y, ")")
+                        new_x = int(input("Enter new x coordinate: "))
+                        new_y = int(input("Enter new y coordinate: "))
+                    except TypeError:
+                        print("Invalid coordinates.")
+                        continue
+                    if self.map.move_unit(s, new_x, new_y):
+                        print(f"{s.name} moved to ({new_x}, {new_y})")
+                        ap_used += 1
+                        self.check_overwatch(s)
+                    else:
+                        print(f"Invalid move for {s.name}.")
+                elif action == 'O':
+                    print(f"{s.name} is on overwatch.")
+                    s.overwatch = True
+                    ap_used = s.ap
+
+    def check_overwatch(self, soldier):
+        if soldier.faction == 'XCOM':
+            for pod in self.pods:
+                for enemy in pod:
+                    if self.line_of_sight(enemy, soldier) and enemy.overwatch:
+                        print(f"{enemy.name} takes an overwatch shot at {soldier.name}!")
+                        enemy.primary_attack(soldier)
+        elif soldier.faction == 'ADVENT':
+            for s in self.soldiers:
+                if self.line_of_sight(soldier, s) and s.overwatch:
+                    print(f"{soldier.name} takes an overwatch shot at {s.name}!")
+                    soldier.primary_attack(s)
+
+    def ADVENT_turn(self):
+        ai = EnemyAI(self.enemies, self, self.soldiers)
+        ai.take_turn()
+
+
+def build_move_map(unit, map):
+    move_map = []
+    for y in range(map.height):
+        for x in range(map.width):
+            if distance(unit.x, x, unit.y, y) <= unit.mobility and map.cover[y][x] == 0:
+                move_map.append((x, y))
+    return move_map
+
+class EnemyAI:
+    def __init__(self, enemies, mission, player_units):
+        self.enemies = enemies
+        self.mission = mission
+        self.player_units = player_units
+        self.state = 'PATROL'  # Initial state
+
+    def patrol(self, enemy):
+        # Simple patrol logic: move randomly within a certain range
+        move_map = build_move_map(enemy, self.mission.map)
+        if move_map:
+            new_position = r.choice(move_map)
+            self.mission.map.move_unit(enemy, new_position[0], new_position[1])
+            print(f"{enemy.name} is patrolling to {new_position}")
+
+    def active(self, enemy):
+        ap_used = 0
+        while enemy.ap > ap_used:
+                best_move, score = self.evaluate_moves(enemy, self.player_units)
+                print(f"{enemy.name} evaluated best move to {best_move} with score {score}")
+                if best_move:
+                    self.mission.map.move_unit(enemy, best_move[0], best_move[1])
+                    ap_used += 1  #Blue move costs 1 AP   
+                    print(f"{enemy.name} moved to {best_move}")
+                    targets = self.mission.targets(enemy)
+                    target_list = [key for key in targets.keys()]
+                    if targets:
+                        enemy.primary_attack(target_list[0])
+                        if enemy.can_attack_twice:
+                            ap_used +=1
+                        else:
+                            ap_used = enemy.ap
+
+    def take_turn(self):
+        for enemy in self.enemies:
+            if enemy.state == 'PATROL':
+                self.patrol(enemy)
+                # Transition to ACTIVE state if a player unit is detected
+                for player in self.player_units:
+                    if self.mission.line_of_sight(enemy, player):
+                        print(f"{enemy.name} has detected {player.name} and is now active!")
+                        enemy.state = 'ACTIVE'
+                        break
+            elif enemy.state == 'ACTIVE':
+                self.active(enemy)
+                        
+
+    def evaluate_moves(self, enemy, player_units):
+        best_move = None
+        best_score = float('-inf')
+        original_position = (enemy.x, enemy.y)
+
+        for move in build_move_map(enemy, self.mission.map):
+            enemy.x, enemy.y = move
+            score = self.evaluate_position(move, enemy, player_units)
+            if score > best_score:
+                best_score = score
+                best_move = move
+        enemy.x, enemy.y = original_position  # Reset to original position
+
+        return best_move, score
+    
+    def evaluate_position(self, position, enemy, player_units):
+        score = 0
+        for p in player_units:
+            #If not in line of sight, award nothing.
+            if not self.mission.line_of_sight(enemy, p):
+                score -= 5  # Penalize for moving out of line of sight
+            #If the enemy is flanked, award nothing
+            if not self.mission.is_covered_from_unit(enemy, p):
+                score -= 10  # Penalize for being flanked
+            #If the player is flanked, award points
+            if not self.mission.is_covered_from_unit(p, enemy):
+                score += 30
+            #Reward moving closer to the player unit
+            score += (enemy.primary_weapon.range - distance(enemy.x, p.x, enemy.y, p.y)) * 2
+            #If moving into high cover, award points
+            score += self.mission.map.cover[position[1]][position[0]] * 5
+        return score
 
 if __name__ == "__main__":
     mission = Mission('small', 'protect device', soldiers=soldiers, factions=['XCOM', 'ADVENT'], force_level=12, pod_count=3)
@@ -210,3 +347,4 @@ if __name__ == "__main__":
     while mission.total_enemy_hp > 0:
         print(mission.total_enemy_hp)
         mission.XCOM_turn()
+        mission.ADVENT_turn()

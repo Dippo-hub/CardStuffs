@@ -21,6 +21,12 @@ class ADVENTWeapon:
                             'muton_bayonet': [6, 7]}
     def __init__(self, weapon):
         self.damage_range = (self.weapon_base_damages.get(weapon)[0], self.weapon_base_damages.get(weapon)[1])
+        if weapon in ['andromedon_punch', 'berserker_punch', 'archon_melee', 'muton_bayonet', 'stun_baton']:
+            self.is_melee = True
+            self.range = 1
+        else:
+            self.is_melee = False
+            self.range = 10
 
     def damage(self):
         return r.randint(self.damage_range[0], self.damage_range[1])
