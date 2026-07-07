@@ -62,7 +62,7 @@ class Mission:
     def deploy_soldiers(self):
         for x in range(self.map.width):
             self.map.grid[self.map.height-1][x] = None
-            self.map.cover[self.map.height-1][x] = False
+            self.map.cover[self.map.height-1][x] = 0
         squad_size = len(self.soldiers)
         start_x = (self.map.width - squad_size) // 2
         for i, soldier in enumerate(self.soldiers):
@@ -74,8 +74,11 @@ class Mission:
     def in_bounds(self, x, y) -> bool:
         return 0 <= x < self.map.width and 0 <= y < self.map.height
 
-    def cover_at(self, x, y) -> bool:
-        return self.map.cover[y][x] if self.in_bounds(x, y) else False
+    def cover_at(self, x, y) -> int:
+        return self.map.cover[y][x] if self.in_bounds(x, y) else 0
+    
+    def cover_blocks_los(self, x, y) -> bool:
+        return self.cover_at(x, y) > 0
 
     def line_of_sight(self, soldier, target) -> bool:
         if self.is_in_cover(soldier) and self.is_in_cover(target):
@@ -88,7 +91,7 @@ class Mission:
                     for t in range(11):
                         t = t/10
                         pos = (round(soldier.x-j + t*dx), round(soldier.y-i + t*dy))
-                        if not self.in_bounds(pos[0], pos[1]) or self.cover_at(pos[0], pos[1]):
+                        if not self.in_bounds(pos[0], pos[1]) or self.cover_blocks_los(pos[0], pos[1]):
                             return False
         elif self.is_in_cover(soldier):
             for i in [-1, 0, 1]:
@@ -100,7 +103,7 @@ class Mission:
                     for t in range(11):
                         t = t/10
                         pos = (round(soldier.x-j + t*dx), round(soldier.y-i + t*dy))
-                        if not self.in_bounds(pos[0], pos[1]) or self.cover_at(pos[0], pos[1]):
+                        if not self.in_bounds(pos[0], pos[1]) or self.cover_blocks_los(pos[0], pos[1]):
                             return False
         elif self.is_in_cover(target):
             for i in [-1, 0, 1]:
@@ -112,7 +115,7 @@ class Mission:
                     for t in range(11):
                         t = t/10
                         pos = (round(soldier.x + t*dx), round(soldier.y + t*dy))
-                        if not self.in_bounds(pos[0], pos[1]) or self.cover_at(pos[0], pos[1]):
+                        if not self.in_bounds(pos[0], pos[1]) or self.cover_blocks_los(pos[0], pos[1]):
                             return False
         else:
             if distance(soldier.x, target.x, soldier.y, target.y) > 10:
@@ -122,7 +125,7 @@ class Mission:
             for t in range(11):
                 t = t/10
                 pos = (round(soldier.x + t*dx), round(soldier.y + t*dy))
-                if not self.in_bounds(pos[0], pos[1]) or self.cover_at(pos[0], pos[1]):
+                if not self.in_bounds(pos[0], pos[1]) or self.cover_blocks_los(pos[0], pos[1]):
                     return False
         return True
     
@@ -172,12 +175,11 @@ class Mission:
         return targets
     
     def process_targets(self, targets):
-        i=1
-        processed_targets = {}
-        for e, value in targets.items():
-            processed_targets[i] = f'{e.name}: {value}'
-            i += 1
-        return processed_targets
+        unprocessed = [key for key in targets.keys()]
+        processed_list = sorted(unprocessed, key=lambda x: targets[x], reverse=True)
+        for i, target in enumerate(processed_list, start=1):
+            print(f"{i}: {target.name} ({targets[target]}% to hit)")
+        return processed_list
 
     def refresh_map(self):
         self.total_enemy_hp = 0
@@ -198,8 +200,7 @@ class Mission:
                 if action == 'A':
                     targets = self.targets(s)
                     if targets:
-                        print(self.process_targets(targets))
-                        target_list = [key for key in targets.keys()]
+                        processed_targets, target_list = self.process_targets(targets)
                         try:
                             target = int(input("Select target: "))
                         except TypeError:
@@ -224,6 +225,7 @@ class Mission:
                         print(f"{s.name} moved to ({new_x}, {new_y})")
                         ap_used += 1
                         self.check_overwatch(s)
+                        self.check_los(s)
                     else:
                         print(f"Invalid move for {s.name}.")
                 elif action == 'O':
@@ -244,9 +246,15 @@ class Mission:
                     print(f"{soldier.name} takes an overwatch shot at {s.name}!")
                     soldier.primary_attack(s)
 
+    def check_los(self, soldier):
+        for pod in self.pods:
+            for e in pod:
+                if self.line_of_sight(soldier, e):
+                    if not e.ai.state == 'ACTIVE':
+                        e.ai.scatter(e)
+
     def ADVENT_turn(self):
-        ai = EnemyAI(self.enemies, self, self.soldiers)
-        ai.take_turn()
+        pass
 
 
 def build_move_map(unit, map):
@@ -258,10 +266,9 @@ def build_move_map(unit, map):
     return move_map
 
 class EnemyAI:
-    def __init__(self, enemies, mission, player_units):
-        self.enemies = enemies
+    def __init__(self, mission):
         self.mission = mission
-        self.player_units = player_units
+        self.player_units = mission.soldiers
         self.state = 'PATROL'  # Initial state
 
     def patrol(self, enemy):
@@ -284,25 +291,34 @@ class EnemyAI:
                     targets = self.mission.targets(enemy)
                     target_list = [key for key in targets.keys()]
                     if targets:
-                        enemy.primary_attack(target_list[0])
+                        enemy.primary_attack(sorted(target_list, key=lambda x: targets[x])[0])
                         if enemy.can_attack_twice:
                             ap_used +=1
                         else:
                             ap_used = enemy.ap
+                    else:
+                        continue #through loop again to move if no targets
 
-    def take_turn(self):
-        for enemy in self.enemies:
+    def take_turn(self, enemy):
             if enemy.state == 'PATROL':
                 self.patrol(enemy)
                 # Transition to ACTIVE state if a player unit is detected
                 for player in self.player_units:
                     if self.mission.line_of_sight(enemy, player):
                         print(f"{enemy.name} has detected {player.name} and is now active!")
-                        enemy.state = 'ACTIVE'
+                        self.scatter(enemy)
                         break
             elif enemy.state == 'ACTIVE':
                 self.active(enemy)
-                        
+
+    def scatter(self, enemy):
+        best_scatter_move, best_scatter_score = self.evaluate_moves(enemy, self.player_units)
+        if best_scatter_move:
+            self.mission.map.move_unit(enemy, best_scatter_move[0], best_scatter_move[1])
+            print(f"{enemy.name} scattered to {best_scatter_move} with score {best_scatter_score}")
+            enemy.state = 'ACTIVE'  # Transition to ACTIVE state after scattering
+
+                      
 
     def evaluate_moves(self, enemy, player_units):
         best_move = None

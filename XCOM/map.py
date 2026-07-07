@@ -52,7 +52,7 @@ class Map:
         return cover
     
     def move_unit(self, unit, new_x, new_y):
-        if self.in_bounds(new_x, new_y) and self.grid[new_y][new_x] is None and distance(unit.x, new_x, unit.y, new_y) <= unit.mobility:
+        if self.in_bounds(new_x, new_y) and self.grid[new_y][new_x] is None and distance(unit.x, new_x, unit.y, new_y) <= unit.mobility and self.cover[new_y][new_x] == 0:
             self.grid[unit.y][unit.x] = None
             self.grid[new_y][new_x] = unit
             unit.x = new_x

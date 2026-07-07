@@ -1,5 +1,6 @@
 import random as r
 from weapons import ADVENTWeapon, XCOMWeapon, CHOSENWeapon, LOSTWeapon
+from mission import EnemyAI
 
 enemy_info = {
     #'Enemy_name: [force_level 0, hp 1, mobility 2, aim 3, defense 4, armor 5, will 6, can_use_cover 7, can_attack_twice 8 , primary_weapon 9, secondary_weapon 10, action_points 11, leader 12]
@@ -92,12 +93,12 @@ def create_pods(pod_count, force_level):
         pods.append(temp)
     return pods
                 
-def initialize_enemy(name):
+def initialize_enemy(name, mission=None):
     search_name = name.split(' ')[0]
-    return Unit(name=name, force_level=enemy_info.get(search_name)[0], hp=enemy_info.get(search_name)[1], mobility=enemy_info.get(search_name)[2], aim=enemy_info.get(search_name)[3], defense=enemy_info.get(search_name)[4], armor=enemy_info.get(search_name)[5], will=enemy_info.get(search_name)[6], can_use_cover=enemy_info.get(search_name)[7], can_attack_twice=enemy_info.get(search_name)[8], primary_weapon=enemy_info.get(search_name)[9], secondary_weapon=enemy_info.get(search_name)[10], action_points=enemy_info.get(search_name)[11], leader=enemy_info.get(search_name)[12], faction='ADVENT')
+    return Unit(name=name, force_level=enemy_info.get(search_name)[0], hp=enemy_info.get(search_name)[1], mobility=enemy_info.get(search_name)[2], aim=enemy_info.get(search_name)[3], defense=enemy_info.get(search_name)[4], armor=enemy_info.get(search_name)[5], will=enemy_info.get(search_name)[6], can_use_cover=enemy_info.get(search_name)[7], can_attack_twice=enemy_info.get(search_name)[8], primary_weapon=enemy_info.get(search_name)[9], secondary_weapon=enemy_info.get(search_name)[10], action_points=enemy_info.get(search_name)[11], leader=enemy_info.get(search_name)[12], faction='ADVENT', ai=EnemyAI(mission))
 
 class Unit:
-    def __init__(self, name, force_level, hp, mobility, aim, defense, armor, will, can_use_cover, can_attack_twice, primary_weapon, secondary_weapon, action_points, leader, faction, tier=0, abilities=[]):
+    def __init__(self, name, force_level, hp, mobility, aim, defense, armor, will, can_use_cover, can_attack_twice, primary_weapon, secondary_weapon, action_points, leader, faction, tier=0, abilities=[], ai=None):
         self.name = name
         self.force_level = force_level
         self.hp = hp
