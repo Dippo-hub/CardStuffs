@@ -246,16 +246,6 @@ class Mission:
                     print(f"{soldier.name} takes an overwatch shot at {s.name}!")
                     soldier.primary_attack(s)
 
-    def check_los(self, soldier):
-        for pod in self.pods:
-            for e in pod:
-                if self.line_of_sight(soldier, e):
-                    if not e.ai.state == 'ACTIVE':
-                        e.ai.scatter(e)
-
-    def ADVENT_turn(self):
-        pass
-
 
 def build_move_map(unit, map):
     move_map = []
@@ -270,6 +260,9 @@ class EnemyAI:
         self.mission = mission
         self.player_units = mission.soldiers
         self.state = 'PATROL'  # Initial state
+
+    def check_los(self, enemy, soldier):
+        return self.mission.line_of_sight(enemy, soldier)
 
     def patrol(self, enemy):
         # Simple patrol logic: move randomly within a certain range
@@ -302,12 +295,7 @@ class EnemyAI:
     def take_turn(self, enemy):
             if enemy.state == 'PATROL':
                 self.patrol(enemy)
-                # Transition to ACTIVE state if a player unit is detected
-                for player in self.player_units:
-                    if self.mission.line_of_sight(enemy, player):
-                        print(f"{enemy.name} has detected {player.name} and is now active!")
-                        self.scatter(enemy)
-                        break
+                self.mission.check_los(enemy)
             elif enemy.state == 'ACTIVE':
                 self.active(enemy)
 
@@ -341,7 +329,6 @@ class EnemyAI:
             #If not in line of sight, award nothing.
             if not self.mission.line_of_sight(enemy, p):
                 score -= 5  # Penalize for moving out of line of sight
-            #If the enemy is flanked, award nothing
             if not self.mission.is_covered_from_unit(enemy, p):
                 score -= 10  # Penalize for being flanked
             #If the player is flanked, award points
@@ -355,12 +342,15 @@ class EnemyAI:
 
 if __name__ == "__main__":
     mission = Mission('small', 'protect device', soldiers=soldiers, factions=['XCOM', 'ADVENT'], force_level=12, pod_count=3)
-    mission.map.display()
-    mission.deploy_soldiers()
-    mission.deploy_enemies()
-    mission.map.display()
+    ai = EnemyAI(mission)
+    ai.mission.map.display()
+    ai.mission.deploy_soldiers()
+    ai.mission.deploy_enemies()
+    ai.mission.map.display()
 
     while mission.total_enemy_hp > 0:
-        print(mission.total_enemy_hp)
-        mission.XCOM_turn()
-        mission.ADVENT_turn()
+        print(ai.mission.total_enemy_hp)
+        ai.mission.XCOM_turn()
+        for pod in ai.mission.pods:
+            for e in pod:
+                ai.take_turn(e)

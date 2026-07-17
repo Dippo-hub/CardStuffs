@@ -24,6 +24,9 @@ class ADVENTWeapon:
         if weapon in ['andromedon_punch', 'berserker_punch', 'archon_melee', 'muton_bayonet', 'stun_baton']:
             self.is_melee = True
             self.range = 1
+        elif weapon in ['wrath_cannon', 'psionic_rifle', 'gatekeeper_beam']:
+            self.is_melee = False
+            self.range = 15
         else:
             self.is_melee = False
             self.range = 10
